@@ -1,5 +1,5 @@
 {
-  description = "Development environment for the recordr app;
+  description = "Development environment for the language learning app";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -10,19 +10,46 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+
+        libraries = with pkgs;[
+          webkitgtk
+          gtk3
+          cairo
+          gdk-pixbuf
+          glib
+          dbus
+          openssl_3
+          librsvg
+        ];
+
+        packages = with pkgs; [
+          curl
+          wget
+          pkg-config
+          dbus
+          openssl_3
+          glib
+          gtk3
+          libsoup
+          webkitgtk
+          librsvg
+          rustc
+          cargo
+          nodejs-18_x
+          yarn
+          pkgs.alsaLib
+        ];
       in
       {
-        # Provide fallbacks for older Nix versions
         devShell = self.devShells.${system}.default or pkgs.mkShell {
-          nativeBuildInputs = [
-            pkgs.nodejs-18_x 
-            pkgs.rustc 
-            pkgs.cargo 
-          ];
+          buildInputs = packages;
 
-          buildInputs = [
-            pkgs.pkg-config 
-          ];
+          # Use a shellHook to append to PATH
+          shellHook = ''
+            export PATH="$HOME/.cargo/bin:$PATH"
+            export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath libraries}:$LD_LIBRARY_PATH
+            export XDG_DATA_DIRS=${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:$XDG_DATA_DIRS
+          '';
         };
 
         packages.${system}.default = pkgs.stdenv.mkDerivation {
