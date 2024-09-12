@@ -15,6 +15,17 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "fs": {
+        "all": true,
+        "scope": ["$APPDIR/*", "$HOME/*"]
+      },
+      "dialog": {
+        "open": true,
+        "save": true
+      },
+      "path": {
+        "all": true
       }
     },
     "windows": [

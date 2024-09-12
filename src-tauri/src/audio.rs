@@ -18,6 +18,11 @@ pub fn start_recording(filename: String) -> Result<String, String> {
             return Err("Recording is already in progress".into());
         }
 
+        // Validate the filename
+        if filename.contains("..") {
+            return Err("Invalid filename".into());
+        }
+
         let host = cpal::default_host();
         let device = host
             .default_input_device()
@@ -31,7 +36,7 @@ pub fn start_recording(filename: String) -> Result<String, String> {
             sample_format: hound::SampleFormat::Int,
         };
 
-        let writer = hound::WavWriter::create(filename, spec).map_err(|e| e.to_string())?;
+        let writer = hound::WavWriter::create(&filename, spec).map_err(|e| e.to_string())?;
         let writer = Arc::new(Mutex::new(writer));
 
         let writer_clone = Arc::clone(&writer);
