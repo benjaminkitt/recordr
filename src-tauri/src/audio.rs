@@ -1,5 +1,3 @@
-// src-tauri/src/audio.rs
-
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{SampleFormat, Stream};
 use hound::WavWriter;

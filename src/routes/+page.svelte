@@ -1,69 +1,105 @@
 <script lang="ts">
   import { invoke } from '@tauri-apps/api/tauri';
   import { open } from '@tauri-apps/api/dialog';
-  import { readTextFile, writeTextFile, BaseDirectory } from '@tauri-apps/api/fs';
-  import { join } from '@tauri-apps/api/path';
+  import { readTextFile, writeTextFile, readBinaryFile, BaseDirectory } from '@tauri-apps/api/fs';
+  import { join, homeDir, dirname } from '@tauri-apps/api/path';
 
-  let sentences: string[] = [];
+  type Sentence = {
+    text: string;
+    recorded: boolean;
+    audioFile?: string;  // Relative path to the audio file within the project directory
+  };
+
+  let sentences: Sentence[] = [];
   let newSentence = '';
-  let selectedSentence = '';
+  let selectedSentence: Sentence | null = null;
   let isRecording = false;
-  let filename = '';
   let projectPath = '';
   let projectDirectory = '';
   let projectName = '';
   let isProjectLoaded = false;
+  let audioPlayer: HTMLAudioElement | null = null;
 
   async function newProject() {
-    const selected = await open({
-      title: 'Select Project Save Location',
-      directory: true,
-      defaultPath: '',
-    });
+    try {
+      // Select a folder under the user's home directory
+      const homeDirPath = await homeDir();
+      const selected = await open({
+        directory: true,
+        defaultPath: await join(homeDirPath),
+        title: 'Select Project Save Location (Home Directory)',
+      });
 
-    if (selected && typeof selected === 'string') {
-      projectDirectory = selected;
-      projectName = prompt('Enter a name for your project:', 'MyProject');
+      if (selected && typeof selected === 'string') {
+        // Ensure the selected directory is within the user's home directory
+        if (!selected.startsWith(homeDirPath)) {
+          alert('Project must be created within your home directory.');
+          return;
+        }
 
-      if (projectName) {
-        projectPath = `${projectDirectory}/${projectName}.json`;
-        sentences = [];
-        isProjectLoaded = true;
-        saveProject();
-      } else {
-        alert('Project name is required.');
+        projectDirectory = selected;
+        projectName = prompt('Enter a name for your project:', 'MyProject');
+
+        if (projectName) {
+          const projectPath = await join(projectDirectory, `${projectName}.json`);
+          await writeTextFile(projectPath, JSON.stringify({ sentences: [] }, null, 2));
+          isProjectLoaded = true;
+          alert(`Project ${projectName} created successfully.`);
+        } else {
+          alert('Project name is required.');
+        }
       }
+    } catch (error) {
+      console.error('Error creating project:', error);
     }
   }
 
   async function openProject() {
-    const selected = await open({
-      title: 'Open Project',
-      filters: [
-        {
-          name: 'Project Files',
-          extensions: ['json'],
-        },
-      ],
-    });
+    try {
+      // Get the actual home directory path
+      const homePath = await homeDir();
 
-    if (selected && typeof selected === 'string') {
-      projectPath = selected;
-      projectDirectory = projectPath.substring(0, projectPath.lastIndexOf('/'));
-      projectName = projectPath.substring(
-        projectPath.lastIndexOf('/') + 1,
-        projectPath.lastIndexOf('.')
-      );
-      try {
-        const contents = await readTextFile(projectPath);
+      // Let the user select the project JSON file
+      const selected = await open({
+        title: 'Open Project',
+        filters: [
+          {
+            name: 'Project Files',
+            extensions: ['json'],
+          },
+        ],
+        defaultPath: homePath,
+        directory: false,
+      });
+
+      if (selected && typeof selected === 'string') {
+        // Ensure that the selected file is within the home directory
+        if (!selected.startsWith(homePath)) {
+          alert('The selected project is not within your home directory.');
+          return;
+        }
+
+        // Calculate the relative project directory using dirname
+        const fullProjectDirectory = await dirname(selected);  // Get the full directory path
+        projectDirectory = fullProjectDirectory.replace(homePath, '');  // Strip the home directory part
+
+        // Extract project name from the file name
+        projectName = selected.substring(
+          selected.lastIndexOf('/') + 1,
+          selected.lastIndexOf('.')
+        );
+
+        // Read and parse the project JSON file
+        const contents = await readTextFile(selected);
         const data = JSON.parse(contents);
         sentences = data.sentences || [];
-        selectedSentence = data.selectedSentence || '';
+
         isProjectLoaded = true;
-      } catch (error) {
-        console.error('Error reading project file:', error);
-        alert('Failed to open project.');
+        alert(`Project ${projectName} loaded successfully.`);
       }
+    } catch (error) {
+      console.error('Error opening project:', error);
+      alert('Failed to open project.');
     }
   }
 
@@ -75,11 +111,12 @@
 
     const data = {
       sentences,
-      selectedSentence,
     };
 
     try {
-      await writeTextFile(projectPath, JSON.stringify(data, null, 2));
+      const homeDirPath = await homeDir();
+      const projectFile = await join(homeDirPath, 'recordr_projects', projectName, `${projectName}.json`);
+      await writeTextFile(projectFile, JSON.stringify(data, null, 2));
       alert('Project saved successfully.');
     } catch (error) {
       console.error('Error saving project:', error);
@@ -87,24 +124,29 @@
     }
   }
 
-  async function generateFilename(sentence: string): Promise<string> {
-    const sanitizedSentence = sentence.trim().replace(/\s+/g, '_') + '.wav';
-    return await join(projectDirectory, sanitizedSentence);
+
+  async function generateFilename(sentence: Sentence): Promise<string> {
+    // If there's no audio file, generate a relative path for the audio file
+    if (!sentence.audioFile) {
+      sentence.audioFile = `${sentence.text.trim().replace(/\s+/g, '_')}.wav`;
+    }
+
+    // Join the project directory with the relative audio file path
+    let homeDirPath = await homeDir();
+    return await join(homeDirPath, projectDirectory, sentence.audioFile);
   }
 
   function addSentence() {
     const trimmedSentence = newSentence.trim();
     if (trimmedSentence === '') {
       alert('Please enter a sentence.');
-    } else if (sentences.includes(trimmedSentence)) {
+    } else if (sentences.some((s) => s.text === trimmedSentence)) {
       alert('This sentence is already in the list.');
     } else {
-      sentences = [...sentences, trimmedSentence];
+      sentences = [...sentences, { text: trimmedSentence, recorded: false }];
       newSentence = '';
+      saveProject(); // Save project after adding a sentence
     }
-
-    // Save project after adding a sentence
-    saveProject();
   }
 
   function removeSentence(index: number) {
@@ -116,7 +158,7 @@
     saveProject();
   }
 
-  function selectSentence(sentence: string) {
+  function selectSentence(sentence: Sentence) {
     selectedSentence = sentence;
   }
 
@@ -135,19 +177,59 @@
       invoke('stop_recording')
         .then(() => {
           isRecording = false;
+          selectedSentence!.recorded = true;
+
+          // Store the relative path to the audio file in the sentence
+          const relativeFilename = `${selectedSentence!.text.trim().replace(/\s+/g, '_')}.wav`;
+          selectedSentence!.audioFile = relativeFilename;
+
+          saveProject();  // Save project after recording
         })
         .catch((error) => {
           console.error(error);
         });
     } else {
-      filename = await generateFilename(selectedSentence);
+      const filename = await generateFilename(selectedSentence);
       invoke('start_recording', { filename })
-      .then(() => {
-        isRecording = true;
-      })
-      .catch((error) => {
-        console.error(error);
+        .then(() => {
+          isRecording = true;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  }
+
+  // TODO: Find a way to reduce the scope (currently "[**]" in tauri.conf.json)
+  async function playSentence(sentence: Sentence) {
+    if (!sentence.recorded || !sentence.audioFile) {
+      alert('This sentence has not been recorded yet.');
+      return;
+    }
+
+    const fullPath = await join(projectDirectory, sentence.audioFile);  // Construct the full path
+    const dirsToLog = `
+    projectDirectory: ${projectDirectory}
+    audioFile: ${sentence.audioFile}
+    `
+    console.log(dirsToLog);
+    try {
+      // Read the audio file using the full path
+      const audioData = await readBinaryFile(fullPath, { dir: BaseDirectory.Home });
+
+      // Create a Blob from the audio data
+      const blob = new Blob([audioData], { type: 'audio/wav' });
+
+      // Create an object URL from the Blob and play it
+      if (!audioPlayer) {
+        audioPlayer = new Audio();
+      }
+      audioPlayer.src = URL.createObjectURL(blob);
+      audioPlayer.play().catch((error) => {
+        console.error('Failed to play audio:', error);
       });
+    } catch (error) {
+      console.error('Failed to load audio file:', error);
     }
   }
 
@@ -173,6 +255,11 @@
 
   .sentence-text {
     flex-grow: 1;
+  }
+
+  .recorded {
+    color: green;
+    margin-left: 10px;
   }
 
   .remove-button {
@@ -247,7 +334,13 @@
         class="sentence-item {selectedSentence === sentence ? 'selected' : ''}"
         on:click={() => selectSentence(sentence)}
       >
-        <span class="sentence-text">{sentence}</span>
+        <span class="sentence-text">
+          {sentence.text}
+          {#if sentence.recorded}
+            <span class="status recorded">[Recorded]</span>
+            <button on:click|stopPropagation={() => playSentence(sentence)}>Play</button>
+          {/if}
+        </span>
         <button class="remove-button" on:click|stopPropagation={() => removeSentence(index)}>
           Remove
         </button>
@@ -265,4 +358,3 @@
     {/if}
   </div>
 </div>
-
