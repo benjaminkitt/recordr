@@ -1,7 +1,59 @@
 <script lang="ts">
-  import { sentences, selectedSentence, isRecording } from '../stores/projectStore';
+  import { sentences, selectedSentence, isRecording, isProjectLoaded, projectDirectory } from '../stores/projectStore'; // import projectDirectory
   import { playSentence, toggleRecording } from '../utils/fileUtils';
   import type { Sentence } from '../types';
+  import { startAutoRecord as autoRecord } from '../utils/autoRecord';
+  import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
+  import { listen } from '@tauri-apps/api/event';
+
+  let silenceThreshold = 0.5; // Default value
+  let silenceDuration = 2000; // In milliseconds
+  let silencePadding = 300; // In milliseconds
+
+  let isAutoRecording = false;
+  let currentSentenceIndex = -1;
+
+  function startAutoRecord() {
+    isAutoRecording = true;
+    const sentenceTexts = get(sentences).map((s) => s.text);
+    const projectDir = get(projectDirectory); // Get the project directory
+
+    if (!projectDir) {
+      console.error('Project directory is not set');
+      isAutoRecording = false;
+      return;
+    }
+
+    autoRecord(sentenceTexts, projectDir, silenceThreshold, silenceDuration, silencePadding)
+      .catch((error) => {
+        console.error('Error starting auto-record:', error);
+        isAutoRecording = false;
+      });
+  }
+
+  onMount(() => {
+    // Listen for events from the backend
+    const unlistenStart = listen('auto-record-start-sentence', (event) => {
+      currentSentenceIndex = event.payload;
+    });
+
+    const unlistenFinish = listen('auto-record-finish-sentence', (event) => {
+      const index = event.payload;
+      $sentences[index].recorded = true;
+    });
+
+    const unlistenComplete = listen('auto-record-complete', () => {
+      isAutoRecording = false;
+      currentSentenceIndex = -1;
+    });
+
+    return () => {
+      unlistenStart.then((unlisten) => unlisten());
+      unlistenFinish.then((unlisten) => unlisten());
+      unlistenComplete.then((unlisten) => unlisten());
+    };
+  });
 
   let newSentence = '';
 
@@ -32,6 +84,21 @@
 </script>
 
 <div>
+  <div>
+    <label>
+      Silence Threshold:
+      <input type="number" bind:value={silenceThreshold} min="0" max="1" step="0.01" />
+    </label>
+    <label>
+      Silence Duration (ms):
+      <input type="number" bind:value={silenceDuration} min="100" step="100" />
+    </label>
+    <label>
+      Silence Padding (ms):
+      <input type="number" bind:value={silencePadding} min="0" step="50" />
+    </label>
+  </div>
+  
   <input
     type="text"
     bind:value={newSentence}
@@ -67,10 +134,17 @@
       <span class="recording-indicator"></span>
     {/if}
   </div>
+  <button on:click={startAutoRecord} disabled={!$isProjectLoaded || !$sentences.length || isAutoRecording}>
+    {isAutoRecording ? 'Auto-Recording...' : 'Start Auto-Record'}
+  </button>
+  {#if isAutoRecording}
+    <p>Recording sentence {currentSentenceIndex + 1} of {$sentences.length}</p>
+  {/if}
+  
 </div>
 
 <style>
-    .sentence-item {
+  .sentence-item {
     display: flex;
     align-items: center;
     padding: 8px;

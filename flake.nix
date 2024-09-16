@@ -37,7 +37,9 @@
           cargo
           nodejs-18_x
           yarn
-          pkgs.alsaLib
+          alsaLib
+          webrtc-audio-processing
+          libclang 
         ];
       in
       {
@@ -48,6 +50,7 @@
           shellHook = ''
             export PATH="$HOME/.cargo/bin:$PATH"
             export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath libraries}:$LD_LIBRARY_PATH
+            export LIBCLANG_PATH=${pkgs.libclang.lib}/lib
             export XDG_DATA_DIRS=${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:$XDG_DATA_DIRS
           '';
         };

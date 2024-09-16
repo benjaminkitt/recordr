@@ -1,13 +1,27 @@
-// src-tauri/src/main.rs
+use tauri::{generate_context, generate_handler, Manager};
+use std::sync::{Arc, Mutex};
 
 mod audio;
 
+use audio::{
+    start_recording,
+    stop_recording,
+    start_auto_record,
+    stop_auto_record,
+    RecordingState,
+};
+
 fn main() {
+    let recording_state = Arc::new(Mutex::new(RecordingState::new()));
+
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![
-            audio::start_recording,
-            audio::stop_recording,
+        .manage(recording_state)
+        .invoke_handler(generate_handler![
+            start_recording,
+            stop_recording,
+            start_auto_record,
+            stop_auto_record,
         ])
-        .run(tauri::generate_context!())
+        .run(generate_context!())
         .expect("error while running tauri application");
 }
