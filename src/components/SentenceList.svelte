@@ -1,7 +1,17 @@
 <script lang="ts">
-  import { sentences, selectedSentence, isRecording, isProjectLoaded, projectDirectory } from '../stores/projectStore'; // import projectDirectory
+  import { 
+    sentences
+    , selectedSentence
+    , isRecording
+    , isProjectLoaded
+    , projectDirectory 
+  } from '../stores/projectStore'; // import projectDirectory
   import { playSentence, toggleRecording } from '../utils/fileUtils';
-  import type { Sentence } from '../types';
+  import type { 
+    Sentence
+    , AutoRecordStartSentenceEvent
+    , AutoRecordFinishSentenceEvent 
+  } from '../types';
   import { startAutoRecord as autoRecord } from '../utils/autoRecord';
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
@@ -34,11 +44,11 @@
 
   onMount(() => {
     // Listen for events from the backend
-    const unlistenStart = listen('auto-record-start-sentence', (event) => {
+    const unlistenStart = listen('auto-record-start-sentence', (event: AutoRecordStartSentenceEvent) => {
       currentSentenceIndex = event.payload;
     });
 
-    const unlistenFinish = listen('auto-record-finish-sentence', (event) => {
+    const unlistenFinish = listen('auto-record-finish-sentence', (event: AutoRecordFinishSentenceEvent) => {
       const index = event.payload;
       $sentences[index].recorded = true;
     });
