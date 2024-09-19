@@ -2,6 +2,7 @@ use tauri::{generate_context, generate_handler};
 use std::sync::{Arc, Mutex};
 
 mod audio;
+mod file_utils;
 
 use audio::{
     start_recording,
@@ -10,6 +11,8 @@ use audio::{
     stop_auto_record,
     RecordingState,
 };
+
+use file_utils::import_sentences;
 
 fn main() {
     let recording_state = Arc::new(Mutex::new(RecordingState::new()));
@@ -21,6 +24,7 @@ fn main() {
             stop_recording,
             start_auto_record,
             stop_auto_record,
+            import_sentences,
         ])
         .run(generate_context!())
         .expect("error while running tauri application");

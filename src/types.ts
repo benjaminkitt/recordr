@@ -1,7 +1,7 @@
 export type Sentence = {
   text: string;
   recorded: boolean;
-  audioFile?: string;
+  audioFilePath?: string;
 };
 
 // Define the event payload types

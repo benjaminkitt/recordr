@@ -90,3 +90,34 @@ export async function playSentence(sentence: Sentence) {
   audio.src = URL.createObjectURL(blob);
   audio.play();
 }
+
+export async function handleFileImport() {
+  try {
+    const selected = await open({
+      multiple: false,
+      filters: [
+        { name: 'Text Files', extensions: ['txt', 'csv', 'tsv'] },
+      ],
+    });
+
+    if (Array.isArray(selected) || !selected) {
+      // User canceled the dialog or didn't select a file
+      return;
+    }
+
+    const projectDir = get(projectDirectory); // Get the project directory
+    if (!projectDir) {
+      console.error('Project directory is not set');
+      return;
+    }
+
+    const newSentences:[Sentence] = await invoke('import_sentences', { 
+      filePath: selected, 
+      projectDir 
+    });
+
+    sentences.update(currentSentences => [...currentSentences, ...newSentences]);
+  } catch (error) {
+    console.error('Error importing sentences:', error);
+  }
+}
