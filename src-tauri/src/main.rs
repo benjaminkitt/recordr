@@ -1,4 +1,4 @@
-use tauri::{generate_context, generate_handler, Manager};
+use tauri::{generate_context, generate_handler};
 use std::sync::{Arc, Mutex};
 
 mod audio;

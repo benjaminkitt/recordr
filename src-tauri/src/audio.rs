@@ -81,7 +81,6 @@ pub fn start_recording(filename: String) -> Result<String, String> {
                 },
                 err_fn,
             ),
-            _ => return Err("Unsupported sample format".into()),
         }
         .map_err(|e| e.to_string())?;
 
@@ -422,7 +421,7 @@ fn get_or_create_project_directory(
 ) -> Result<std::path::PathBuf, Box<dyn std::error::Error>> {
     let project_dir = match tauri::api::path::home_dir() {
         Some(home) => home.join(project_directory),
-        None => std::path::PathBuf::from(project_directory),
+        _none => std::path::PathBuf::from(project_directory),
     };
 
     // Ensure the project directory exists.
