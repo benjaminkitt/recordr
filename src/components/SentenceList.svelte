@@ -1,25 +1,26 @@
 <script lang="ts">
   import { 
-    sentences
-    , selectedSentence
-    , isRecording
-    , isProjectLoaded
-    , projectDirectory 
-  } from '../stores/projectStore'; // import projectDirectory
+    sentences,
+    selectedSentence,
+    isRecording,
+    isProjectLoaded,
+    projectDirectory 
+  } from '../stores/projectStore';
   import { playSentence, toggleRecording } from '../utils/fileUtils';
   import type { 
-    Sentence
-    , AutoRecordStartSentenceEvent
-    , AutoRecordFinishSentenceEvent 
+    Sentence,
+    AutoRecordStartSentenceEvent,
+    AutoRecordFinishSentenceEvent 
   } from '../types';
   import { startAutoRecord as autoRecord } from '../utils/autoRecord';
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
   import { listen } from '@tauri-apps/api/event';
+  import { RangeSlider } from '@skeletonlabs/skeleton';
 
-  let silenceThreshold = 0.5; // Default value
-  let silenceDuration = 2000; // In milliseconds
-  let silencePadding = 300; // In milliseconds
+  let silenceThreshold = 0.5;
+  let silenceDuration = 2000;
+  let silencePadding = 300;
 
   let isAutoRecording = false;
   let currentSentenceIndex = -1;
@@ -27,7 +28,7 @@
   function startAutoRecord() {
     isAutoRecording = true;
     const sentenceTexts = get(sentences).map((s) => s.text);
-    const projectDir = get(projectDirectory); // Get the project directory
+    const projectDir = get(projectDirectory);
 
     if (!projectDir) {
       console.error('Project directory is not set');
@@ -67,9 +68,6 @@
 
   let newSentence = '';
 
-  $: $sentences as Sentence[];
-  $: $selectedSentence as Sentence | null;
-
   function addSentence() {
     const trimmedSentence = newSentence.trim();
     if (trimmedSentence === '') {
@@ -93,62 +91,84 @@
   }
 </script>
 
-<div>
-  <div>
-    <label>
-      Silence Threshold:
-      <input type="number" bind:value={silenceThreshold} min="0" max="1" step="0.01" />
-    </label>
-    <label>
-      Silence Duration (ms):
-      <input type="number" bind:value={silenceDuration} min="100" step="100" />
-    </label>
-    <label>
-      Silence Padding (ms):
-      <input type="number" bind:value={silencePadding} min="0" step="50" />
-    </label>
+<div class="space-y-4">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+      <label class="label">
+        Silence Threshold:
+        <div class="flex justify-between text-xs">
+          <span>0</span>
+          <span>{silenceThreshold}</span>
+          <span>1</span>
+        </div>
+        <RangeSlider name="range-slider" bind:value={silenceThreshold} min={0} max={1} step={0.01} />
+      </label>
+    </div>
+    <div>
+      <label class="label">
+        Silence Duration (ms):
+        <div class="flex justify-between text-xs">
+          <span>100</span>
+          <span>{silenceDuration}</span>
+          <span>5000</span>
+        </div>
+        <RangeSlider name="range-slider" bind:value={silenceDuration} min={100} max={5000} step={100} />
+      </label>
+    </div>
+    <div>
+      <label class="label">
+        Silence Padding (ms):
+        <div class="flex justify-between text-xs">
+          <span>0</span>
+          <span>{silencePadding}</span>
+          <span>1000</span>
+        </div>
+        <RangeSlider name="range-slider" bind:value={silencePadding} min={0} max={1000} step={50} />
+      </label>
+    </div>
   </div>
   
-  <input
-    type="text"
+  <input 
+    type="text" 
+    class="input" 
+    placeholder="Enter a new sentence" 
     bind:value={newSentence}
-    placeholder="Enter a new sentence"
-    on:keydown={(e) => e.key === 'Enter' && addSentence()}
-  />
-  <button on:click={addSentence}>Add Sentence</button>
+  >
+  <button class="btn" on:click={addSentence}>Add Sentence</button>
 
-  <div>
+  <div class="card p-4 space-y-2 overflow-y-auto" style="max-height: 300px;"> 
     {#each $sentences as sentence, index}
       <div
-        class="sentence-item {$selectedSentence === sentence ? 'selected' : ''}"
-        role="button"
-        tabindex="0"
+        class="p-2 {$selectedSentence === sentence ? 'bg-primary-500' : 'bg-surface-200-700-token'} rounded-container-token"
         on:click={() => selectSentence(sentence)}
         on:keydown={(e) => e.key === 'Enter' && selectSentence(sentence)}
       >
-        <span class="sentence-text">{sentence.text}</span>
-        {#if sentence.recorded}
-          <span class="recorded">[Recorded]</span>
-          <button on:click={() => playSentence(sentence)}>Play</button>
-        {/if}
-        <button on:click={() => removeSentence(index)}>Remove</button>
+        <div class="flex justify-between items-center">
+          <span>{sentence.text}</span>
+          <div>
+            {#if sentence.recorded}
+              <span class="badge variant-filled-success">Recorded</span>
+              <button class="btn variant-ghost" on:click={() => playSentence(sentence)}>Play</button>
+            {/if}
+            <button class="btn variant-ghost" on:click={() => removeSentence(index)}>Remove</button>
+          </div>
+        </div>
       </div>
     {/each}
   </div>
 
-  <div>
-    <button on:click={() => toggleRecording()} disabled={!$selectedSentence}>
+  <div class="flex gap-2">
+    <button class="btn" on:click={() => toggleRecording()} disabled={!$selectedSentence}>
       {$isRecording ? 'Stop Recording' : 'Start Recording'}
     </button>
     {#if $isRecording}
-      <span class="recording-indicator"></span>
+      <span class="badge variant-filled-error animate-pulse">Recording</span>
     {/if}
   </div>
-  <button on:click={startAutoRecord} disabled={!$isProjectLoaded || !$sentences.length || isAutoRecording}>
+  <button class="btn" on:click={startAutoRecord} disabled={!$isProjectLoaded || !$sentences.length || isAutoRecording}>
     {isAutoRecording ? 'Auto-Recording...' : 'Start Auto-Record'}
   </button>
   {#if isAutoRecording}
     <p>Recording sentence {currentSentenceIndex + 1} of {$sentences.length}</p>
   {/if}
-  
 </div>
