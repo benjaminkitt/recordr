@@ -3,12 +3,14 @@
   import SentenceList from '../components/SentenceList.svelte';
 </script>
 
-<div class="flex flex-col min-h-screen mx-auto p-4 transition-width">
-  <div class="flex-grow"> <div class="card p-4 mb-4">
-      <ProjectManager />
-    </div>
-    <div class="card p-4 flex-grow overflow-y-auto"> 
+<div class="flex flex-col h-screen p-4">
+  <div class="card p-4 mb-2">
+    <ProjectManager />
+  </div>
+  <div class="flex-grow overflow-hidden">
+    <div class="card p-4 h-full overflow-hidden flex flex-col">
       <SentenceList />
     </div>
   </div>
 </div>
+

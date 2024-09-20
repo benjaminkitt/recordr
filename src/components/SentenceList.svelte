@@ -100,7 +100,7 @@
   };
 </script>
 
-<div class="space-y-4">
+<div class="space-y-4 flex flex-col h-full">
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <div>
       <label class="label">
@@ -147,10 +147,11 @@
     <button class="btn variant-filled shrink-0 inline-flex justify-center items-center gap-x-2" on:click={addSentence}>Add Sentence</button>
   </div>  
 
-  <div class="card p-4 space-y-2 overflow-y-auto" style="max-height: 300px;"> 
+  <div class="flex-grow overflow-hidden mt-4 border border-surface-300-600-token rounded-container-token">
+    <div class="h-full overflow-y-auto p-4">
     {#each $sentences as sentence, index}
       <div
-        class="p-2 {$selectedSentence === sentence ? 'bg-primary-500' : 'bg-surface-200-700-token'} rounded-container-token"
+        class="p-2 mb-2 {$selectedSentence === sentence ? 'bg-primary-500' : 'bg-surface-200-700-token'} rounded-container-token"
         on:click={() => selectSentence(sentence)}
         on:keydown={(e) => e.key === 'Enter' && selectSentence(sentence)}
       >
@@ -172,20 +173,29 @@
         </div>
       </div>
     {/each}
+    </div>
   </div>
 
-  <div class="flex gap-2">
-    <button class="btn" on:click={() => toggleRecording()} disabled={!$selectedSentence}>
+  <div class="mt-4 flex gap-2">
+    <button 
+      class="btn variant-filled" 
+      on:click={() => toggleRecording()} 
+      disabled={!$selectedSentence}
+    >
       {$isRecording ? 'Stop Recording' : 'Start Recording'}
     </button>
     {#if $isRecording}
       <span class="badge variant-filled-error animate-pulse">Recording</span>
     {/if}
+    <button 
+      class="btn variant-filled" 
+      on:click={startAutoRecord} 
+      disabled={!$isProjectLoaded || !$sentences.length || isAutoRecording}
+    >
+      {isAutoRecording ? 'Auto-Recording...' : 'Start Auto-Record'}
+    </button>
   </div>
-  <button class="btn" on:click={startAutoRecord} disabled={!$isProjectLoaded || !$sentences.length || isAutoRecording}>
-    {isAutoRecording ? 'Auto-Recording...' : 'Start Auto-Record'}
-  </button>
   {#if isAutoRecording}
-    <p>Recording sentence {currentSentenceIndex + 1} of {$sentences.length}</p>
+    <p class="mt-2">Recording sentence {currentSentenceIndex + 1} of {$sentences.length}</p>
   {/if}
 </div>

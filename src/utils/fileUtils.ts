@@ -53,8 +53,13 @@ export async function openProject() {
 }
 
 export async function saveProject() {
-  const homePath = await homeDir();
-  const path = await join(homePath, 'recordr_projects', `${projectName}.json`);
+  const projectDir = get(projectDirectory);
+  const name = get(projectName);
+  if (!projectDir || !name) {
+    console.error('Project directory or name is not set');
+    return;
+  }
+  const path = await join(projectDir, `${name}.json`);
   await writeTextFile(path, JSON.stringify({ sentences: get(sentences) }));
 }
 
