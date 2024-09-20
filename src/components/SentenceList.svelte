@@ -17,6 +17,9 @@
   import { get } from 'svelte/store';
   import { listen } from '@tauri-apps/api/event';
   import { RangeSlider } from '@skeletonlabs/skeleton';
+  import MdiRemoveBox from '~icons/mdi/remove-box';
+  import { popup } from '@skeletonlabs/skeleton';
+  import type { PopupSettings } from '@skeletonlabs/skeleton';
 
   let silenceThreshold = 0.5;
   let silenceDuration = 2000;
@@ -89,6 +92,12 @@
   function selectSentence(sentence: Sentence) {
     selectedSentence.set(sentence);
   }
+
+  const removePopupHover: PopupSettings = {
+    event: 'hover',
+    target: 'removePopupHover',
+    placement: 'top'
+  };
 </script>
 
 <div class="space-y-4">
@@ -127,14 +136,16 @@
       </label>
     </div>
   </div>
-  
-  <input 
-    type="text" 
-    class="input" 
-    placeholder="Enter a new sentence" 
-    bind:value={newSentence}
-  >
-  <button class="btn" on:click={addSentence}>Add Sentence</button>
+
+  <div class="flex gap-4">
+    <input 
+      type="text" 
+      class="input py-3 px-4 block w-full" 
+      placeholder="Enter a new sentence" 
+      bind:value={newSentence}
+    >
+    <button class="btn variant-filled shrink-0 inline-flex justify-center items-center gap-x-2" on:click={addSentence}>Add Sentence</button>
+  </div>  
 
   <div class="card p-4 space-y-2 overflow-y-auto" style="max-height: 300px;"> 
     {#each $sentences as sentence, index}
@@ -150,7 +161,13 @@
               <span class="badge variant-filled-success">Recorded</span>
               <button class="btn variant-ghost" on:click={() => playSentence(sentence)}>Play</button>
             {/if}
-            <button class="btn variant-ghost" on:click={() => removeSentence(index)}>Remove</button>
+            <button class="btn variant-filled-error" use:popup={removePopupHover} on:click={() => removeSentence(index)}>
+              <MdiRemoveBox />
+            </button>
+            <div class="card p-4 variant-filled-secondary" data-popup="removePopupHover">
+              <p>Delete</p>
+              <div class="arrow variant-filled-secondary" />
+            </div>
           </div>
         </div>
       </div>

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { openProject, saveProject, newProject, handleFileImport } from "../utils/fileUtils";
   import { projectName, isProjectLoaded } from "../stores/projectStore";
-  import type { Sentence } from '../types';
 
   function createProject() {
     newProject();
