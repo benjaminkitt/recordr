@@ -5,6 +5,7 @@ use csv::ReaderBuilder; // Assuming you're using the `csv` crate
 
 #[derive(Clone, serde::Serialize)]
 pub struct Sentence {
+    pub id: u32,
     pub text: String,
     pub recorded: bool,
     pub audio_file_path: Option<String>,
@@ -26,20 +27,22 @@ pub async fn import_sentences(file_path: &str, project_dir: &str) -> Result<Vec<
 
     // 3. Construct the full audio file path for each sentence
     let sentences_with_paths: Vec<Sentence> = sentences
-        .into_iter()
-        .map(|sentence| {
-            let audio_file_name = format!("{}.wav", sentence.text); 
-            let audio_file_path = Path::new(project_dir)
-                .join(audio_file_name)
-                .to_string_lossy()
-                .to_string();
-            Sentence {
-                text: sentence.text,
-                recorded: false,
-                audio_file_path: Some(audio_file_path),
-            }
-        })
-        .collect();
+    .into_iter()
+    .enumerate()
+    .map(|(index, sentence)| {
+        let audio_file_name = format!("{}.wav", sentence.text);
+        let audio_file_path = Path::new(project_dir)
+            .join(audio_file_name)
+            .to_string_lossy()
+            .to_string();
+        Sentence {
+            id: (index + 1) as u32,
+            text: sentence.text,
+            recorded: false,
+            audio_file_path: Some(audio_file_path),
+        }
+    })
+    .collect();
 
     Ok(sentences_with_paths)
 }
@@ -47,10 +50,12 @@ pub async fn import_sentences(file_path: &str, project_dir: &str) -> Result<Vec<
 fn parse_txt(file_contents: &str) -> Vec<Sentence> {
     file_contents
         .lines()
-        .map(|line| Sentence {
+        .enumerate()
+        .map(|(index, line)| Sentence {
+            id: (index + 1) as u32,
             text: line.trim().to_string(),
             recorded: false,
-            audio_file_path: None, 
+            audio_file_path: None,
         })
         .collect()
 }
@@ -62,10 +67,11 @@ fn parse_delimited(file_contents: &str, delimiter: u8) -> Result<Vec<Sentence>, 
         .from_reader(file_contents.as_bytes());
     let mut sentences = Vec::new();
 
-    for result in rdr.records() {
+    for (index, result) in rdr.records().enumerate() {
         let record = result.map_err(|e| format!("Failed to parse: {}", e))?;
         if let Some(text) = record.get(0) {
             sentences.push(Sentence {
+                id: (index + 1) as u32,
                 text: text.to_string(),
                 recorded: false,
                 audio_file_path: None,

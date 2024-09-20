@@ -78,10 +78,12 @@
     } else if ($sentences.some((s) => s.text === trimmedSentence)) {
       alert('This sentence is already in the list.');
     } else {
-      $sentences = [...$sentences, { text: trimmedSentence, recorded: false }];
+      const newId = Math.max(0, ...$sentences.map(s => s.id)) + 1;
+      $sentences = [...$sentences, { id: newId, text: trimmedSentence, recorded: false }];
       newSentence = '';
     }
   }
+
 
   function removeSentence(index: number) {
     if (confirm('Are you sure you want to remove this sentence?')) {

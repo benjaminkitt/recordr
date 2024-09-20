@@ -121,7 +121,10 @@ export async function handleFileImport() {
       projectDir 
     });
 
-    sentences.update(currentSentences => [...currentSentences, ...newSentences]);
+    sentences.update(currentSentences => {
+      const maxId = Math.max(0, ...currentSentences.map(s => s.id));
+      return [...currentSentences, ...newSentences.map((s, index) => ({ ...s, id: maxId + index + 1 }))];
+    });
   } catch (error) {
     console.error('Error importing sentences:', error);
   }

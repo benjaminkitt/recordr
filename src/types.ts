@@ -1,4 +1,5 @@
 export type Sentence = {
+  id: number;
   text: string;
   recorded: boolean;
   audioFilePath?: string;
