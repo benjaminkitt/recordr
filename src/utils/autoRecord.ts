@@ -1,7 +1,8 @@
 import { invoke } from '@tauri-apps/api/tauri';
+import type { Sentence } from '../types';
 
 export async function startAutoRecord(
-  sentences: string[],
+  sentences: Sentence[],
   projectDirectory: string,
   silenceThreshold: number,
   silenceDuration: number,

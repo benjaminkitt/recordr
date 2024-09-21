@@ -8,6 +8,8 @@ use std::time::{Duration, Instant};
 use std::io::BufWriter;
 use std::fs::File;
 
+use crate::file_utils::Sentence;
+
 // Thread-local storage for recording state. It stores the current recording stream and writer.
 thread_local! {
     static RECORDING: std::cell::RefCell<Option<(Stream, Arc<Mutex<WavWriter<std::io::BufWriter<std::fs::File>>>>)>> = std::cell::RefCell::new(None);
@@ -139,7 +141,7 @@ impl RecordingState {
 // Starts the auto-recording process with sentence detection and silence handling.
 #[tauri::command]
 pub fn start_auto_record(
-    sentences: Vec<String>,
+    sentences: Vec<Sentence>,
     project_directory: String, // Directory to save the recordings.
     silence_threshold: f32,
     silence_duration: u64,
@@ -178,8 +180,8 @@ pub fn start_auto_record(
         for (index, sentence) in sentences.iter().enumerate() {
             println!(
                 "Starting auto-recording for sentence {}: {}",
-                index + 1,
-                sentence,
+                sentence.id,
+                sentence.text,
             );
 
             // Update the recording state.
@@ -192,13 +194,13 @@ pub fn start_auto_record(
             }
 
             // Notify the frontend about the current sentence.
-            window.emit("auto-record-start-sentence", index).unwrap();
+            window.emit("auto-record-start-sentence", sentence.id).unwrap();
 
             // Record the sentence with silence detection.
             if let Err(e) = record_sentence(
                 &device,
                 &config,
-                sentence,
+                &sentence.text,
                 &project_directory_clone,
                 silence_threshold,
                 silence_duration,
@@ -209,7 +211,7 @@ pub fn start_auto_record(
             }
 
             // Notify the frontend after finishing the sentence.
-            window.emit("auto-record-finish-sentence", index).unwrap();
+            window.emit("auto-record-finish-sentence", sentence.id).unwrap();
         }
 
         // Notify the frontend that auto-recording is complete.
