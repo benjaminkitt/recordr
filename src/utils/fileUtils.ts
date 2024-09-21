@@ -24,12 +24,15 @@ export async function newProject() {
   }) as string;  // Cast as string since multiple is false
 
   if (selected) {
-    projectDirectory.set(selected);
     const name = prompt('Enter a name for your project:');
-    projectName.set(name || 'MyProject');
-    const path = await join(selected, `${name}.json`);
-    await writeTextFile(path, JSON.stringify({ sentences: [] }));
-    isProjectLoaded.set(true);
+    if (name) {
+      const result = await invoke('create_new_project', { parentDir: selected, projectName: name });
+      if (result) {
+        projectName.set(name);
+        projectDirectory.set(await join(selected, name));
+        isProjectLoaded.set(true);
+      }
+    }
   }
 }
 
@@ -40,12 +43,11 @@ export async function openProject() {
     defaultPath: homePath,
     multiple: false,
     title: 'Select Project File',
-  }) as string;  // Cast as string since multiple is false
+  }) as string;
 
   if (selected) {
-    const content = await readTextFile(selected);
-    const data = JSON.parse(content);
-    sentences.set(data.sentences);
+    const loadedSentences:[Sentence] = await invoke('open_project', { filePath: selected });
+    sentences.set(loadedSentences);
     projectName.set(selected.split('/').pop()?.replace('.json', '') || '');
     projectDirectory.set(selected.substring(0, selected.lastIndexOf('/')));
     isProjectLoaded.set(true);
@@ -60,7 +62,7 @@ export async function saveProject() {
     return;
   }
   const path = await join(projectDir, `${name}.json`);
-  await writeTextFile(path, JSON.stringify({ sentences: get(sentences) }));
+  await invoke('save_project', { filePath: path, sentences: get(sentences) });
 }
 
 export async function toggleRecording() {

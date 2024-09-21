@@ -105,36 +105,36 @@
 <div class="space-y-4 flex flex-col h-full">
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <div>
-      <label class="label">
+      <label class="label" for="silence-threshold">
         Silence Threshold:
         <div class="flex justify-between text-xs">
           <span>0</span>
           <span>{silenceThreshold}</span>
           <span>1</span>
         </div>
-        <RangeSlider name="range-slider" bind:value={silenceThreshold} min={0} max={1} step={0.01} />
+        <RangeSlider id="silence-threshold" name="silence-threshold" bind:value={silenceThreshold} min={0} max={1} step={0.01} />
       </label>
     </div>
     <div>
-      <label class="label">
+      <label class="label" for="silence-duration">
         Silence Duration (ms):
         <div class="flex justify-between text-xs">
           <span>100</span>
           <span>{silenceDuration}</span>
           <span>5000</span>
         </div>
-        <RangeSlider name="range-slider" bind:value={silenceDuration} min={100} max={5000} step={100} />
+        <RangeSlider id="silence-duration" name="silence-duration" bind:value={silenceDuration} min={100} max={5000} step={100} />
       </label>
     </div>
     <div>
-      <label class="label">
+      <label class="label" for="silence-padding">
         Silence Padding (ms):
         <div class="flex justify-between text-xs">
           <span>0</span>
           <span>{silencePadding}</span>
           <span>1000</span>
         </div>
-        <RangeSlider name="range-slider" bind:value={silencePadding} min={0} max={1000} step={50} />
+        <RangeSlider id="silence-padding" name="silence-padding" bind:value={silencePadding} min={0} max={1000} step={50} />
       </label>
     </div>
   </div>
@@ -153,6 +153,8 @@
     <div class="h-full overflow-y-auto p-4">
     {#each $sentences as sentence, index}
       <div
+        role="button"
+        tabindex="0"
         class="p-2 mb-2 {$selectedSentence === sentence ? 'bg-primary-500' : 'bg-surface-200-700-token'} rounded-container-token"
         on:click={() => selectSentence(sentence)}
         on:keydown={(e) => e.key === 'Enter' && selectSentence(sentence)}

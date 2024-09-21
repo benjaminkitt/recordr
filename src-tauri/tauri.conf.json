@@ -16,10 +16,6 @@
         "all": false,
         "open": true
       },
-      "fs": {
-        "all": true,
-        "scope": ["**"]
-      },
       "dialog": {
         "open": true,
         "save": true

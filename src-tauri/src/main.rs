@@ -12,7 +12,12 @@ use audio::{
     RecordingState,
 };
 
-use file_utils::import_sentences;
+use file_utils::{
+    import_sentences,
+    create_new_project,
+    open_project,
+    save_project,
+};
 
 fn main() {
     let recording_state = Arc::new(Mutex::new(RecordingState::new()));
@@ -25,6 +30,9 @@ fn main() {
             start_auto_record,
             stop_auto_record,
             import_sentences,
+            create_new_project,
+            open_project,
+            save_project,
         ])
         .run(generate_context!())
         .expect("error while running tauri application");

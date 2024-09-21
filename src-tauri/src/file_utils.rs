@@ -1,9 +1,10 @@
 use std::fs;
 use std::path::Path;
 use std::ffi::OsStr;
-use csv::ReaderBuilder; // Assuming you're using the `csv` crate
+use csv::ReaderBuilder;
+use serde_json;
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Sentence {
     pub id: u32,
     pub text: String,
@@ -80,4 +81,33 @@ fn parse_delimited(file_contents: &str, delimiter: u8) -> Result<Vec<Sentence>, 
     }
 
     Ok(sentences) // Add this line to return the sentences
+}
+
+#[tauri::command]
+pub fn create_new_project(parent_dir: &str, project_name: &str) -> Result<bool, String> {
+    let project_path = Path::new(parent_dir).join(project_name);
+    fs::create_dir_all(&project_path).map_err(|e| e.to_string())?;
+    
+    let json_path = project_path.join(format!("{}.json", project_name));
+    let initial_data = serde_json::json!({ "sentences": [] });
+    fs::write(json_path, serde_json::to_string_pretty(&initial_data).unwrap())
+        .map_err(|e| e.to_string())?;
+    
+    Ok(true)
+}
+
+#[tauri::command]
+pub fn open_project(file_path: &str) -> Result<Vec<Sentence>, String> {
+    let content = fs::read_to_string(file_path).map_err(|e| e.to_string())?;
+    let data: serde_json::Value = serde_json::from_str(&content).map_err(|e| e.to_string())?;
+    let sentences: Vec<Sentence> = serde_json::from_value(data["sentences"].clone()).map_err(|e| e.to_string())?;
+    Ok(sentences)
+}
+
+#[tauri::command]
+pub fn save_project(file_path: &str, sentences: Vec<Sentence>) -> Result<bool, String> {
+    let data = serde_json::json!({ "sentences": sentences });
+    fs::write(file_path, serde_json::to_string_pretty(&data).unwrap())
+        .map_err(|e| e.to_string())?;
+    Ok(true)
 }
