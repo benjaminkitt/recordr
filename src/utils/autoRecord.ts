@@ -6,7 +6,8 @@ export async function startAutoRecord(
   projectDirectory: string,
   silenceThreshold: number,
   silenceDuration: number,
-  silencePadding: number
+  silencePadding: number,
+  window: Window
 ) {
   await invoke('start_auto_record', {
     sentences,
@@ -14,6 +15,7 @@ export async function startAutoRecord(
     silenceThreshold,
     silenceDuration,
     silencePadding,
+    window,
   });
 }
 

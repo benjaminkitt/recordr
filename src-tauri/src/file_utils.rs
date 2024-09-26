@@ -2,15 +2,8 @@ use std::fs;
 use std::path::Path;
 use std::ffi::OsStr;
 use csv::ReaderBuilder;
-use serde_json;
-
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
-pub struct Sentence {
-    pub id: u32,
-    pub text: String,
-    pub recorded: bool,
-    pub audio_file_path: Option<String>,
-}
+use serde::{Deserialize, Serialize};
+use crate::models::Sentence;
 
 #[tauri::command]
 pub async fn import_sentences(file_path: &str, project_dir: &str) -> Result<Vec<Sentence>, String> {
@@ -37,7 +30,7 @@ pub async fn import_sentences(file_path: &str, project_dir: &str) -> Result<Vec<
             .to_string_lossy()
             .to_string();
         Sentence {
-            id: (index + 1) as u32,
+            id: (index + 1),
             text: sentence.text,
             recorded: false,
             audio_file_path: Some(audio_file_path),
@@ -53,7 +46,7 @@ fn parse_txt(file_contents: &str) -> Vec<Sentence> {
         .lines()
         .enumerate()
         .map(|(index, line)| Sentence {
-            id: (index + 1) as u32,
+            id: (index + 1),
             text: line.trim().to_string(),
             recorded: false,
             audio_file_path: None,
@@ -72,7 +65,7 @@ fn parse_delimited(file_contents: &str, delimiter: u8) -> Result<Vec<Sentence>, 
         let record = result.map_err(|e| format!("Failed to parse: {}", e))?;
         if let Some(text) = record.get(0) {
             sentences.push(Sentence {
-                id: (index + 1) as u32,
+                id: (index + 1),
                 text: text.to_string(),
                 recorded: false,
                 audio_file_path: None,

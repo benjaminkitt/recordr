@@ -2477,6 +2477,7 @@ name = "recordr"
 version = "0.1.0"
 dependencies = [
  "cpal",
+ "crossbeam-channel",
  "csv",
  "hound",
  "serde",

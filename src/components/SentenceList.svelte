@@ -20,6 +20,7 @@
   import MdiRemoveBox from "~icons/mdi/remove-box";
   import { popup } from "@skeletonlabs/skeleton";
   import type { PopupSettings } from "@skeletonlabs/skeleton";
+  import { appWindow } from '@tauri-apps/api/window';
 
   let silenceThreshold = 0.5;
   let silenceDuration = 2000;
@@ -31,7 +32,7 @@
   let sentenceListContainer: HTMLDivElement;
   let currentRecordingId: number | null = null;
 
-  function startAutoRecord() {
+  async function startAutoRecord() {
     isAutoRecording = true;
     const projectDir = get(projectDirectory);
 
@@ -41,16 +42,19 @@
       return;
     }
 
-    autoRecord(
-      get(sentences),
-      projectDir,
-      silenceThreshold,
-      silenceDuration,
-      silencePadding,
-    ).catch((error) => {
+    try {
+      await autoRecord(
+        get(sentences),
+        projectDir,
+        silenceThreshold,
+        silenceDuration,
+        silencePadding,
+        appWindow as unknown as Window
+      );
+    } catch (error) {
       console.error("Error starting auto-record:", error);
       isAutoRecording = false;
-    });
+    }
   }
 
   onMount(() => {

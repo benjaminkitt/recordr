@@ -1,0 +1,1728 @@
+
+> recordr@0.1.0 tauri
+> tauri dev
+
+yarn run v1.22.22
+$ vite dev
+
+  VITE v5.4.4  ready in 650 ms
+
+  ➜  Local:   http://localhost:1420/
+  ➜  Network: use --host to expose
+Starting auto-recording with 1298 sentences
+Processing sentence 1/1298: 나야.
+Starting to record sentence: 나야.
+Audio stream started for sentence: 나야.
+Waiting for voice to be detected...
+Current elapsed time since last activity: 55.225556ms
+Current elapsed time since last activity: 98.094054ms
+Current elapsed time since last activity: 98.135895ms
+Current elapsed time since last activity: 140.669149ms
+Current elapsed time since last activity: 140.703707ms
+Current elapsed time since last activity: 183.230124ms
+Current elapsed time since last activity: 183.2617ms
+Current elapsed time since last activity: 226.12462ms
+Current elapsed time since last activity: 226.164828ms
+Current elapsed time since last activity: 268.694551ms
+Current elapsed time since last activity: 268.727904ms
+Current elapsed time since last activity: 311.221047ms
+Current elapsed time since last activity: 311.250833ms
+Current elapsed time since last activity: 353.934645ms
+Current elapsed time since last activity: 353.960392ms
+Current elapsed time since last activity: 396.55839ms
+Current elapsed time since last activity: 396.585422ms
+Current elapsed time since last activity: 439.172164ms
+Current elapsed time since last activity: 439.203886ms
+Current elapsed time since last activity: 481.868422ms
+Current elapsed time since last activity: 481.898705ms
+Current elapsed time since last activity: 524.527036ms
+Current elapsed time since last activity: 524.556606ms
+Current elapsed time since last activity: 567.169146ms
+Current elapsed time since last activity: 567.19842ms
+Current elapsed time since last activity: 614.909873ms
+Current elapsed time since last activity: 614.955951ms
+Current elapsed time since last activity: 652.582811ms
+Current elapsed time since last activity: 652.767764ms
+Current elapsed time since last activity: 695.232494ms
+Current elapsed time since last activity: 695.267686ms
+Current elapsed time since last activity: 738.144987ms
+Current elapsed time since last activity: 738.18026ms
+Current elapsed time since last activity: 780.60997ms
+Current elapsed time since last activity: 780.645325ms
+Current elapsed time since last activity: 823.165455ms
+Current elapsed time since last activity: 823.204564ms
+Current elapsed time since last activity: 865.892087ms
+Current elapsed time since last activity: 865.924926ms
+Current elapsed time since last activity: 908.629823ms
+Current elapsed time since last activity: 908.661375ms
+Current elapsed time since last activity: 951.237145ms
+Current elapsed time since last activity: 951.267317ms
+Current elapsed time since last activity: 993.92271ms
+Current elapsed time since last activity: 993.973477ms
+Current elapsed time since last activity: 1.036627595s
+Current elapsed time since last activity: 1.036658477s
+Current elapsed time since last activity: 1.079256693s
+Current elapsed time since last activity: 1.079290861s
+Current elapsed time since last activity: 1.121997507s
+Current elapsed time since last activity: 1.122034404s
+Current elapsed time since last activity: 1.164609219s
+Current elapsed time since last activity: 1.164638529s
+Current elapsed time since last activity: 1.207282774s
+Voice detected, resetting last_active_time
+Voice detected, now waiting for silence...
+Entering wait_for_silence
+Current silence duration: 49.888µs
+Current elapsed time since last activity: 38.89µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.581651ms
+In silence, but duration not yet reached. Elapsed: 42.581651ms
+Current elapsed time since last activity: 42.637088ms
+In silence, but duration not yet reached. Elapsed: 42.637088ms
+Current elapsed time since last activity: 85.213265ms
+In silence, but duration not yet reached. Elapsed: 85.213265ms
+Current elapsed time since last activity: 85.276629ms
+In silence, but duration not yet reached. Elapsed: 85.276629ms
+Current silence duration: 100.080569ms
+Current elapsed time since last activity: 127.940739ms
+In silence, but duration not yet reached. Elapsed: 127.940739ms
+Current elapsed time since last activity: 127.994147ms
+In silence, but duration not yet reached. Elapsed: 127.994147ms
+Current elapsed time since last activity: 170.458832ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 14.852µs
+Voice detected, resetting last_active_time
+Current silence duration: 29.686324ms
+Current elapsed time since last activity: 42.756599ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.029µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.602705ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 6.94µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.78144ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 10.388µs
+Voice detected, resetting last_active_time
+Current silence duration: 1.49584ms
+Current elapsed time since last activity: 42.405362ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 23.926µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.600946ms
+In silence, but duration not yet reached. Elapsed: 42.600946ms
+Current elapsed time since last activity: 42.633742ms
+In silence, but duration not yet reached. Elapsed: 42.633742ms
+Current silence duration: 59.127506ms
+Current elapsed time since last activity: 85.303298ms
+In silence, but duration not yet reached. Elapsed: 85.303298ms
+Current elapsed time since last activity: 85.337583ms
+In silence, but duration not yet reached. Elapsed: 85.337583ms
+Current elapsed time since last activity: 128.004783ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 14.802µs
+Voice detected, resetting last_active_time
+Current silence duration: 31.163205ms
+Current elapsed time since last activity: 42.576696ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.552µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.765977ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 8.013µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.685457ms
+In silence, but duration not yet reached. Elapsed: 42.685457ms
+Current elapsed time since last activity: 42.722438ms
+In silence, but duration not yet reached. Elapsed: 42.722438ms
+Current silence duration: 45.835712ms
+Current elapsed time since last activity: 85.092217ms
+In silence, but duration not yet reached. Elapsed: 85.092217ms
+Current elapsed time since last activity: 85.124758ms
+In silence, but duration not yet reached. Elapsed: 85.124758ms
+Current elapsed time since last activity: 127.861988ms
+In silence, but duration not yet reached. Elapsed: 127.861988ms
+Current elapsed time since last activity: 127.915368ms
+In silence, but duration not yet reached. Elapsed: 127.915368ms
+Current silence duration: 145.897223ms
+Current elapsed time since last activity: 170.573137ms
+In silence, but duration not yet reached. Elapsed: 170.573137ms
+Current elapsed time since last activity: 170.604919ms
+In silence, but duration not yet reached. Elapsed: 170.604919ms
+Current elapsed time since last activity: 213.153723ms
+In silence, but duration not yet reached. Elapsed: 213.153723ms
+Current elapsed time since last activity: 213.196256ms
+In silence, but duration not yet reached. Elapsed: 213.196256ms
+Current silence duration: 245.986515ms
+Current elapsed time since last activity: 255.783511ms
+In silence, but duration not yet reached. Elapsed: 255.783511ms
+Current elapsed time since last activity: 255.822503ms
+In silence, but duration not yet reached. Elapsed: 255.822503ms
+Current elapsed time since last activity: 298.495885ms
+In silence, but duration not yet reached. Elapsed: 298.495885ms
+Current elapsed time since last activity: 298.544155ms
+In silence, but duration not yet reached. Elapsed: 298.544155ms
+Current elapsed time since last activity: 341.064567ms
+In silence, but duration not yet reached. Elapsed: 341.064567ms
+Current elapsed time since last activity: 341.106026ms
+In silence, but duration not yet reached. Elapsed: 341.106026ms
+Current silence duration: 346.064625ms
+Current elapsed time since last activity: 383.786859ms
+In silence, but duration not yet reached. Elapsed: 383.786859ms
+Current elapsed time since last activity: 383.839595ms
+In silence, but duration not yet reached. Elapsed: 383.839595ms
+Current elapsed time since last activity: 426.569269ms
+In silence, but duration not yet reached. Elapsed: 426.569269ms
+Current elapsed time since last activity: 426.598437ms
+In silence, but duration not yet reached. Elapsed: 426.598437ms
+Current silence duration: 446.142775ms
+Current elapsed time since last activity: 469.093226ms
+In silence, but duration not yet reached. Elapsed: 469.093226ms
+Current elapsed time since last activity: 469.124163ms
+In silence, but duration not yet reached. Elapsed: 469.124163ms
+Current elapsed time since last activity: 511.801542ms
+In silence, but duration not yet reached. Elapsed: 511.801542ms
+Current elapsed time since last activity: 511.899857ms
+In silence, but duration not yet reached. Elapsed: 511.899857ms
+Current silence duration: 546.262574ms
+Current elapsed time since last activity: 554.456684ms
+In silence, but duration not yet reached. Elapsed: 554.456684ms
+Current elapsed time since last activity: 554.487809ms
+In silence, but duration not yet reached. Elapsed: 554.487809ms
+Current elapsed time since last activity: 597.123205ms
+In silence, but duration not yet reached. Elapsed: 597.123205ms
+Current elapsed time since last activity: 597.171622ms
+In silence, but duration not yet reached. Elapsed: 597.171622ms
+Current elapsed time since last activity: 639.940748ms
+In silence, but duration not yet reached. Elapsed: 639.940748ms
+Current elapsed time since last activity: 639.971971ms
+In silence, but duration not yet reached. Elapsed: 639.971971ms
+Current silence duration: 646.346477ms
+Current elapsed time since last activity: 682.518187ms
+In silence, but duration not yet reached. Elapsed: 682.518187ms
+Current elapsed time since last activity: 682.547329ms
+In silence, but duration not yet reached. Elapsed: 682.547329ms
+Current elapsed time since last activity: 725.203288ms
+In silence, but duration not yet reached. Elapsed: 725.203288ms
+Current elapsed time since last activity: 725.23881ms
+In silence, but duration not yet reached. Elapsed: 725.23881ms
+Current silence duration: 746.431354ms
+Current elapsed time since last activity: 767.802349ms
+In silence, but duration not yet reached. Elapsed: 767.802349ms
+Current elapsed time since last activity: 767.833183ms
+In silence, but duration not yet reached. Elapsed: 767.833183ms
+Current elapsed time since last activity: 810.549954ms
+In silence, but duration not yet reached. Elapsed: 810.549954ms
+Current elapsed time since last activity: 810.616353ms
+In silence, but duration not yet reached. Elapsed: 810.616353ms
+Current silence duration: 846.51764ms
+Current elapsed time since last activity: 853.13837ms
+In silence, but duration not yet reached. Elapsed: 853.13837ms
+Current elapsed time since last activity: 853.177023ms
+In silence, but duration not yet reached. Elapsed: 853.177023ms
+Current elapsed time since last activity: 895.781012ms
+In silence, but duration not yet reached. Elapsed: 895.781012ms
+Current elapsed time since last activity: 895.819763ms
+In silence, but duration not yet reached. Elapsed: 895.819763ms
+Current elapsed time since last activity: 938.639456ms
+In silence, but duration not yet reached. Elapsed: 938.639456ms
+Current elapsed time since last activity: 938.679506ms
+In silence, but duration not yet reached. Elapsed: 938.679506ms
+Current silence duration: 946.608354ms
+Current elapsed time since last activity: 981.103754ms
+In silence, but duration not yet reached. Elapsed: 981.103754ms
+Current elapsed time since last activity: 981.138973ms
+In silence, but duration not yet reached. Elapsed: 981.138973ms
+Current elapsed time since last activity: 1.02392002s
+In silence, but duration not yet reached. Elapsed: 1.02392002s
+Current elapsed time since last activity: 1.023975635s
+In silence, but duration not yet reached. Elapsed: 1.023975635s
+Current silence duration: 1.046704704s
+Current elapsed time since last activity: 1.066568773s
+In silence, but duration not yet reached. Elapsed: 1.066568773s
+Current elapsed time since last activity: 1.066617671s
+In silence, but duration not yet reached. Elapsed: 1.066617671s
+Current elapsed time since last activity: 1.109097383s
+In silence, but duration not yet reached. Elapsed: 1.109097383s
+Current elapsed time since last activity: 1.109134606s
+In silence, but duration not yet reached. Elapsed: 1.109134606s
+Current silence duration: 1.146800377s
+Current elapsed time since last activity: 1.151918318s
+In silence, but duration not yet reached. Elapsed: 1.151918318s
+Current elapsed time since last activity: 1.151944721s
+In silence, but duration not yet reached. Elapsed: 1.151944721s
+Current elapsed time since last activity: 1.194388891s
+In silence, but duration not yet reached. Elapsed: 1.194388891s
+Current elapsed time since last activity: 1.194426112s
+In silence, but duration not yet reached. Elapsed: 1.194426112s
+Current elapsed time since last activity: 1.237168349s
+In silence, but duration not yet reached. Elapsed: 1.237168349s
+Current elapsed time since last activity: 1.237204005s
+In silence, but duration not yet reached. Elapsed: 1.237204005s
+Current silence duration: 1.246915576s
+Current elapsed time since last activity: 1.279778287s
+In silence, but duration not yet reached. Elapsed: 1.279778287s
+Current elapsed time since last activity: 1.27982066s
+In silence, but duration not yet reached. Elapsed: 1.27982066s
+Current elapsed time since last activity: 1.322625393s
+In silence, but duration not yet reached. Elapsed: 1.322625393s
+Current elapsed time since last activity: 1.322664531s
+In silence, but duration not yet reached. Elapsed: 1.322664531s
+Current silence duration: 1.347009436s
+Current elapsed time since last activity: 1.365164286s
+In silence, but duration not yet reached. Elapsed: 1.365164286s
+Current elapsed time since last activity: 1.36522493s
+In silence, but duration not yet reached. Elapsed: 1.36522493s
+Current elapsed time since last activity: 1.407749242s
+In silence, but duration not yet reached. Elapsed: 1.407749242s
+Current elapsed time since last activity: 1.407786668s
+In silence, but duration not yet reached. Elapsed: 1.407786668s
+Current silence duration: 1.447095818s
+Current elapsed time since last activity: 1.450410864s
+In silence, but duration not yet reached. Elapsed: 1.450410864s
+Current elapsed time since last activity: 1.450444847s
+In silence, but duration not yet reached. Elapsed: 1.450444847s
+Current elapsed time since last activity: 1.493090815s
+In silence, but duration not yet reached. Elapsed: 1.493090815s
+Current elapsed time since last activity: 1.493148476s
+In silence, but duration not yet reached. Elapsed: 1.493148476s
+Current elapsed time since last activity: 1.535784034s
+In silence, but duration not yet reached. Elapsed: 1.535784034s
+Current elapsed time since last activity: 1.53582263s
+In silence, but duration not yet reached. Elapsed: 1.53582263s
+Current silence duration: 1.547181704s
+Current elapsed time since last activity: 1.578442297s
+In silence, but duration not yet reached. Elapsed: 1.578442297s
+Current elapsed time since last activity: 1.578509339s
+In silence, but duration not yet reached. Elapsed: 1.578509339s
+Current elapsed time since last activity: 1.621163739s
+In silence, but duration not yet reached. Elapsed: 1.621163739s
+Current elapsed time since last activity: 1.621200319s
+In silence, but duration not yet reached. Elapsed: 1.621200319s
+Current silence duration: 1.647274448s
+Current elapsed time since last activity: 1.663719104s
+In silence, but duration not yet reached. Elapsed: 1.663719104s
+Current elapsed time since last activity: 1.663766292s
+In silence, but duration not yet reached. Elapsed: 1.663766292s
+Current elapsed time since last activity: 1.706515475s
+In silence, but duration not yet reached. Elapsed: 1.706515475s
+Current elapsed time since last activity: 1.706553446s
+In silence, but duration not yet reached. Elapsed: 1.706553446s
+Current silence duration: 1.747393573s
+Current elapsed time since last activity: 1.749120855s
+In silence, but duration not yet reached. Elapsed: 1.749120855s
+Current elapsed time since last activity: 1.749162123s
+In silence, but duration not yet reached. Elapsed: 1.749162123s
+Current elapsed time since last activity: 1.791762365s
+In silence, but duration not yet reached. Elapsed: 1.791762365s
+Current elapsed time since last activity: 1.791804336s
+In silence, but duration not yet reached. Elapsed: 1.791804336s
+Current elapsed time since last activity: 1.834467722s
+In silence, but duration not yet reached. Elapsed: 1.834467722s
+Current elapsed time since last activity: 1.834502729s
+In silence, but duration not yet reached. Elapsed: 1.834502729s
+Current silence duration: 1.8475033s
+Current elapsed time since last activity: 1.877250178s
+In silence, but duration not yet reached. Elapsed: 1.877250178s
+Current elapsed time since last activity: 1.877284692s
+In silence, but duration not yet reached. Elapsed: 1.877284692s
+Current elapsed time since last activity: 1.919742145s
+In silence, but duration not yet reached. Elapsed: 1.919742145s
+Current elapsed time since last activity: 1.919787966s
+In silence, but duration not yet reached. Elapsed: 1.919787966s
+Current silence duration: 1.947592057s
+Current elapsed time since last activity: 1.962461276s
+In silence, but duration not yet reached. Elapsed: 1.962461276s
+Current elapsed time since last activity: 1.962499371s
+In silence, but duration not yet reached. Elapsed: 1.962499371s
+Current elapsed time since last activity: 2.005127861s
+Silence duration reached after 2.005127861s
+Current silence duration: 2.047688986s
+Current elapsed time since last activity: 2.047723206s
+Silence duration reached: 2.047688986s
+Current elapsed time since last activity: 2.047748474s
+Exiting wait_for_silence
+Silence detected, finishing recording for sentence: 나야.
+Finished processing sentence 1/1298
+Processing sentence 2/1298: 친구야.
+Starting to record sentence: 친구야.
+Audio stream started for sentence: 친구야.
+Waiting for voice to be detected...
+Current elapsed time since last activity: 40.520184ms
+Current elapsed time since last activity: 83.111393ms
+Current elapsed time since last activity: 83.145854ms
+Current elapsed time since last activity: 125.789849ms
+Current elapsed time since last activity: 125.825484ms
+Current elapsed time since last activity: 168.460913ms
+Current elapsed time since last activity: 168.501379ms
+Current elapsed time since last activity: 211.131959ms
+Current elapsed time since last activity: 211.175107ms
+Current elapsed time since last activity: 253.925284ms
+Current elapsed time since last activity: 253.963319ms
+Current elapsed time since last activity: 296.577605ms
+Current elapsed time since last activity: 296.614451ms
+Current elapsed time since last activity: 339.44725ms
+Current elapsed time since last activity: 339.474253ms
+Current elapsed time since last activity: 381.792632ms
+Current elapsed time since last activity: 381.82083ms
+Current elapsed time since last activity: 424.489253ms
+Current elapsed time since last activity: 424.523252ms
+Current elapsed time since last activity: 467.105201ms
+Current elapsed time since last activity: 467.138415ms
+Current elapsed time since last activity: 509.871998ms
+Current elapsed time since last activity: 509.907432ms
+Current elapsed time since last activity: 552.504966ms
+Current elapsed time since last activity: 552.541329ms
+Current elapsed time since last activity: 595.191122ms
+Current elapsed time since last activity: 595.257717ms
+Current elapsed time since last activity: 637.771606ms
+Current elapsed time since last activity: 637.814687ms
+Current elapsed time since last activity: 680.432822ms
+Current elapsed time since last activity: 680.460228ms
+Current elapsed time since last activity: 723.0703ms
+Current elapsed time since last activity: 723.114399ms
+Current elapsed time since last activity: 765.757438ms
+Current elapsed time since last activity: 765.787334ms
+Current elapsed time since last activity: 808.525481ms
+Current elapsed time since last activity: 808.558785ms
+Current elapsed time since last activity: 851.146614ms
+Current elapsed time since last activity: 851.177763ms
+Current elapsed time since last activity: 893.777899ms
+Current elapsed time since last activity: 893.81188ms
+Current elapsed time since last activity: 936.512437ms
+Current elapsed time since last activity: 936.540794ms
+Current elapsed time since last activity: 979.121229ms
+Current elapsed time since last activity: 979.15798ms
+Current elapsed time since last activity: 1.021779719s
+Current elapsed time since last activity: 1.021803183s
+Current elapsed time since last activity: 1.064457073s
+Current elapsed time since last activity: 1.064512079s
+Current elapsed time since last activity: 1.107147888s
+Current elapsed time since last activity: 1.107199697s
+Current elapsed time since last activity: 1.149801541s
+Current elapsed time since last activity: 1.149840756s
+Current elapsed time since last activity: 1.192410986s
+Current elapsed time since last activity: 1.192445439s
+Current elapsed time since last activity: 1.235062906s
+Current elapsed time since last activity: 1.23509039s
+Current elapsed time since last activity: 1.277758141s
+Current elapsed time since last activity: 1.277796601s
+Current elapsed time since last activity: 1.320560101s
+Voice detected, resetting last_active_time
+Voice detected, now waiting for silence...
+Entering wait_for_silence
+Current elapsed time since last activity: 34.387µs
+Current silence duration: 36.315µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.478557ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 14.435µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.642839ms
+In silence, but duration not yet reached. Elapsed: 42.642839ms
+Current elapsed time since last activity: 42.682816ms
+In silence, but duration not yet reached. Elapsed: 42.682816ms
+Current silence duration: 57.53391ms
+Current elapsed time since last activity: 85.474129ms
+In silence, but duration not yet reached. Elapsed: 85.474129ms
+Current elapsed time since last activity: 85.513207ms
+In silence, but duration not yet reached. Elapsed: 85.513207ms
+Current elapsed time since last activity: 127.993429ms
+In silence, but duration not yet reached. Elapsed: 127.993429ms
+Current elapsed time since last activity: 128.036542ms
+In silence, but duration not yet reached. Elapsed: 128.036542ms
+Current silence duration: 157.672186ms
+Current elapsed time since last activity: 170.601173ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 6.87µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.85579ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.129µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.434473ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 6.801µs
+Voice detected, resetting last_active_time
+Current silence duration: 1.774934ms
+Current elapsed time since last activity: 42.57698ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 23.176µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.601229ms
+In silence, but duration not yet reached. Elapsed: 42.601229ms
+Current elapsed time since last activity: 42.638291ms
+In silence, but duration not yet reached. Elapsed: 42.638291ms
+Current silence duration: 59.213549ms
+Current elapsed time since last activity: 85.29664ms
+In silence, but duration not yet reached. Elapsed: 85.29664ms
+Current elapsed time since last activity: 85.329097ms
+In silence, but duration not yet reached. Elapsed: 85.329097ms
+Current elapsed time since last activity: 128.058274ms
+In silence, but duration not yet reached. Elapsed: 128.058274ms
+Current elapsed time since last activity: 128.110134ms
+In silence, but duration not yet reached. Elapsed: 128.110134ms
+Current silence duration: 159.302704ms
+Current elapsed time since last activity: 170.5917ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 9.49µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.81183ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 10.298µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.563888ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 10.244µs
+Voice detected, resetting last_active_time
+Current silence duration: 4.168315ms
+Current elapsed time since last activity: 42.890433ms
+In silence, but duration not yet reached. Elapsed: 42.890433ms
+Current elapsed time since last activity: 42.938177ms
+In silence, but duration not yet reached. Elapsed: 42.938177ms
+Current elapsed time since last activity: 85.201087ms
+In silence, but duration not yet reached. Elapsed: 85.201087ms
+Current elapsed time since last activity: 85.249273ms
+In silence, but duration not yet reached. Elapsed: 85.249273ms
+Current silence duration: 104.268397ms
+Current elapsed time since last activity: 128.000176ms
+In silence, but duration not yet reached. Elapsed: 128.000176ms
+Current elapsed time since last activity: 128.04745ms
+In silence, but duration not yet reached. Elapsed: 128.04745ms
+Current elapsed time since last activity: 170.598417ms
+In silence, but duration not yet reached. Elapsed: 170.598417ms
+Current elapsed time since last activity: 170.640364ms
+In silence, but duration not yet reached. Elapsed: 170.640364ms
+Current silence duration: 204.360183ms
+Current elapsed time since last activity: 213.164907ms
+In silence, but duration not yet reached. Elapsed: 213.164907ms
+Current elapsed time since last activity: 213.206896ms
+In silence, but duration not yet reached. Elapsed: 213.206896ms
+Current elapsed time since last activity: 256.030931ms
+In silence, but duration not yet reached. Elapsed: 256.030931ms
+Current elapsed time since last activity: 256.0737ms
+In silence, but duration not yet reached. Elapsed: 256.0737ms
+Current elapsed time since last activity: 298.477616ms
+In silence, but duration not yet reached. Elapsed: 298.477616ms
+Current elapsed time since last activity: 298.520706ms
+In silence, but duration not yet reached. Elapsed: 298.520706ms
+Current silence duration: 304.48627ms
+Current elapsed time since last activity: 341.280128ms
+In silence, but duration not yet reached. Elapsed: 341.280128ms
+Current elapsed time since last activity: 341.321866ms
+In silence, but duration not yet reached. Elapsed: 341.321866ms
+Current elapsed time since last activity: 383.808912ms
+In silence, but duration not yet reached. Elapsed: 383.808912ms
+Current elapsed time since last activity: 383.859189ms
+In silence, but duration not yet reached. Elapsed: 383.859189ms
+Current silence duration: 404.615198ms
+Current elapsed time since last activity: 426.570608ms
+In silence, but duration not yet reached. Elapsed: 426.570608ms
+Current elapsed time since last activity: 426.612578ms
+In silence, but duration not yet reached. Elapsed: 426.612578ms
+Current elapsed time since last activity: 469.202183ms
+In silence, but duration not yet reached. Elapsed: 469.202183ms
+Current elapsed time since last activity: 469.240482ms
+In silence, but duration not yet reached. Elapsed: 469.240482ms
+Current silence duration: 504.740161ms
+Current elapsed time since last activity: 511.801401ms
+In silence, but duration not yet reached. Elapsed: 511.801401ms
+Current elapsed time since last activity: 511.840119ms
+In silence, but duration not yet reached. Elapsed: 511.840119ms
+Current elapsed time since last activity: 554.496382ms
+In silence, but duration not yet reached. Elapsed: 554.496382ms
+Current elapsed time since last activity: 554.553969ms
+In silence, but duration not yet reached. Elapsed: 554.553969ms
+Current elapsed time since last activity: 597.371286ms
+In silence, but duration not yet reached. Elapsed: 597.371286ms
+Current elapsed time since last activity: 597.421755ms
+In silence, but duration not yet reached. Elapsed: 597.421755ms
+Current silence duration: 604.830402ms
+Current elapsed time since last activity: 639.880614ms
+In silence, but duration not yet reached. Elapsed: 639.880614ms
+Current elapsed time since last activity: 639.924081ms
+In silence, but duration not yet reached. Elapsed: 639.924081ms
+Current elapsed time since last activity: 682.584152ms
+In silence, but duration not yet reached. Elapsed: 682.584152ms
+Current elapsed time since last activity: 682.625973ms
+In silence, but duration not yet reached. Elapsed: 682.625973ms
+Current silence duration: 704.954945ms
+Current elapsed time since last activity: 725.241962ms
+In silence, but duration not yet reached. Elapsed: 725.241962ms
+Current elapsed time since last activity: 725.276534ms
+In silence, but duration not yet reached. Elapsed: 725.276534ms
+Current elapsed time since last activity: 767.882509ms
+In silence, but duration not yet reached. Elapsed: 767.882509ms
+Current elapsed time since last activity: 767.927437ms
+In silence, but duration not yet reached. Elapsed: 767.927437ms
+Current silence duration: 805.074362ms
+Current elapsed time since last activity: 810.549379ms
+In silence, but duration not yet reached. Elapsed: 810.549379ms
+Current elapsed time since last activity: 810.603125ms
+In silence, but duration not yet reached. Elapsed: 810.603125ms
+Current elapsed time since last activity: 853.167938ms
+In silence, but duration not yet reached. Elapsed: 853.167938ms
+Current elapsed time since last activity: 853.205288ms
+In silence, but duration not yet reached. Elapsed: 853.205288ms
+Current elapsed time since last activity: 895.823247ms
+In silence, but duration not yet reached. Elapsed: 895.823247ms
+Current elapsed time since last activity: 895.863106ms
+In silence, but duration not yet reached. Elapsed: 895.863106ms
+Current silence duration: 905.163179ms
+Current elapsed time since last activity: 938.604782ms
+In silence, but duration not yet reached. Elapsed: 938.604782ms
+Current elapsed time since last activity: 938.651492ms
+In silence, but duration not yet reached. Elapsed: 938.651492ms
+Current elapsed time since last activity: 981.172746ms
+In silence, but duration not yet reached. Elapsed: 981.172746ms
+Current elapsed time since last activity: 981.217335ms
+In silence, but duration not yet reached. Elapsed: 981.217335ms
+Current silence duration: 1.005262536s
+Current elapsed time since last activity: 1.023970952s
+In silence, but duration not yet reached. Elapsed: 1.023970952s
+Current elapsed time since last activity: 1.024011918s
+In silence, but duration not yet reached. Elapsed: 1.024011918s
+Current elapsed time since last activity: 1.066420904s
+In silence, but duration not yet reached. Elapsed: 1.066420904s
+Current elapsed time since last activity: 1.066454198s
+In silence, but duration not yet reached. Elapsed: 1.066454198s
+Current silence duration: 1.105351891s
+Current elapsed time since last activity: 1.109169676s
+In silence, but duration not yet reached. Elapsed: 1.109169676s
+Current elapsed time since last activity: 1.109194378s
+In silence, but duration not yet reached. Elapsed: 1.109194378s
+Current elapsed time since last activity: 1.151897675s
+In silence, but duration not yet reached. Elapsed: 1.151897675s
+Current elapsed time since last activity: 1.151932438s
+In silence, but duration not yet reached. Elapsed: 1.151932438s
+Current elapsed time since last activity: 1.19442865s
+In silence, but duration not yet reached. Elapsed: 1.19442865s
+Current elapsed time since last activity: 1.194475102s
+In silence, but duration not yet reached. Elapsed: 1.194475102s
+Current silence duration: 1.205443302s
+Current elapsed time since last activity: 1.237156162s
+In silence, but duration not yet reached. Elapsed: 1.237156162s
+Current elapsed time since last activity: 1.237190318s
+In silence, but duration not yet reached. Elapsed: 1.237190318s
+Current elapsed time since last activity: 1.280077246s
+In silence, but duration not yet reached. Elapsed: 1.280077246s
+Current elapsed time since last activity: 1.280119286s
+In silence, but duration not yet reached. Elapsed: 1.280119286s
+Current silence duration: 1.305573292s
+Current elapsed time since last activity: 1.322513191s
+In silence, but duration not yet reached. Elapsed: 1.322513191s
+Current elapsed time since last activity: 1.322574019s
+In silence, but duration not yet reached. Elapsed: 1.322574019s
+Current elapsed time since last activity: 1.365123861s
+In silence, but duration not yet reached. Elapsed: 1.365123861s
+Current elapsed time since last activity: 1.365161159s
+In silence, but duration not yet reached. Elapsed: 1.365161159s
+Current silence duration: 1.405685393s
+Current elapsed time since last activity: 1.407821672s
+In silence, but duration not yet reached. Elapsed: 1.407821672s
+Current elapsed time since last activity: 1.407853028s
+In silence, but duration not yet reached. Elapsed: 1.407853028s
+Current elapsed time since last activity: 1.450459334s
+In silence, but duration not yet reached. Elapsed: 1.450459334s
+Current elapsed time since last activity: 1.450491138s
+In silence, but duration not yet reached. Elapsed: 1.450491138s
+Current elapsed time since last activity: 1.493155927s
+In silence, but duration not yet reached. Elapsed: 1.493155927s
+Current elapsed time since last activity: 1.493200869s
+In silence, but duration not yet reached. Elapsed: 1.493200869s
+Current silence duration: 1.50579282s
+Current elapsed time since last activity: 1.535928611s
+In silence, but duration not yet reached. Elapsed: 1.535928611s
+Current elapsed time since last activity: 1.535960534s
+In silence, but duration not yet reached. Elapsed: 1.535960534s
+Current elapsed time since last activity: 1.578618074s
+In silence, but duration not yet reached. Elapsed: 1.578618074s
+Current elapsed time since last activity: 1.578651639s
+In silence, but duration not yet reached. Elapsed: 1.578651639s
+Current silence duration: 1.605932423s
+Current elapsed time since last activity: 1.621197261s
+In silence, but duration not yet reached. Elapsed: 1.621197261s
+Current elapsed time since last activity: 1.621229817s
+In silence, but duration not yet reached. Elapsed: 1.621229817s
+Current elapsed time since last activity: 1.663872976s
+In silence, but duration not yet reached. Elapsed: 1.663872976s
+Current elapsed time since last activity: 1.663901345s
+In silence, but duration not yet reached. Elapsed: 1.663901345s
+Current silence duration: 1.706059404s
+Current elapsed time since last activity: 1.706607354s
+In silence, but duration not yet reached. Elapsed: 1.706607354s
+Current elapsed time since last activity: 1.706626046s
+In silence, but duration not yet reached. Elapsed: 1.706626046s
+Current elapsed time since last activity: 1.749139249s
+In silence, but duration not yet reached. Elapsed: 1.749139249s
+Current elapsed time since last activity: 1.749171391s
+In silence, but duration not yet reached. Elapsed: 1.749171391s
+Current elapsed time since last activity: 1.791980475s
+In silence, but duration not yet reached. Elapsed: 1.791980475s
+Current elapsed time since last activity: 1.792034557s
+In silence, but duration not yet reached. Elapsed: 1.792034557s
+Current silence duration: 1.806147724s
+Current elapsed time since last activity: 1.834525514s
+In silence, but duration not yet reached. Elapsed: 1.834525514s
+Current elapsed time since last activity: 1.834561336s
+In silence, but duration not yet reached. Elapsed: 1.834561336s
+Current elapsed time since last activity: 1.877250583s
+In silence, but duration not yet reached. Elapsed: 1.877250583s
+Current elapsed time since last activity: 1.877302473s
+In silence, but duration not yet reached. Elapsed: 1.877302473s
+Current silence duration: 1.906232146s
+Current elapsed time since last activity: 1.919888616s
+In silence, but duration not yet reached. Elapsed: 1.919888616s
+Current elapsed time since last activity: 1.919925742s
+In silence, but duration not yet reached. Elapsed: 1.919925742s
+Current elapsed time since last activity: 1.962510829s
+In silence, but duration not yet reached. Elapsed: 1.962510829s
+Current elapsed time since last activity: 1.962554494s
+In silence, but duration not yet reached. Elapsed: 1.962554494s
+Current elapsed time since last activity: 2.005226628s
+Silence duration reached after 2.005226628s
+Current silence duration: 2.006349044s
+Silence duration reached: 2.006349044s
+Exiting wait_for_silence
+Silence detected, finishing recording for sentence: 친구야.
+Finished processing sentence 2/1298
+Processing sentence 3/1298: 한국이야.
+Starting to record sentence: 한국이야.
+Audio stream started for sentence: 한국이야.
+Waiting for voice to be detected...
+Current elapsed time since last activity: 40.07601ms
+Current elapsed time since last activity: 82.686451ms
+Current elapsed time since last activity: 82.718867ms
+Current elapsed time since last activity: 125.523399ms
+Current elapsed time since last activity: 125.555047ms
+Current elapsed time since last activity: 168.338864ms
+Current elapsed time since last activity: 168.381573ms
+Current elapsed time since last activity: 210.746108ms
+Current elapsed time since last activity: 210.776574ms
+Current elapsed time since last activity: 253.515859ms
+Current elapsed time since last activity: 253.547176ms
+Current elapsed time since last activity: 296.066579ms
+Current elapsed time since last activity: 296.097336ms
+Current elapsed time since last activity: 338.688528ms
+Current elapsed time since last activity: 338.71983ms
+Current elapsed time since last activity: 381.483351ms
+Current elapsed time since last activity: 381.517678ms
+Current elapsed time since last activity: 424.047536ms
+Current elapsed time since last activity: 424.084079ms
+Current elapsed time since last activity: 466.811351ms
+Current elapsed time since last activity: 466.845347ms
+Current elapsed time since last activity: 509.387706ms
+Current elapsed time since last activity: 509.41892ms
+Current elapsed time since last activity: 552.039115ms
+Current elapsed time since last activity: 552.088775ms
+Current elapsed time since last activity: 594.702398ms
+Current elapsed time since last activity: 594.740001ms
+Current elapsed time since last activity: 637.459355ms
+Current elapsed time since last activity: 637.492231ms
+Current elapsed time since last activity: 680.133462ms
+Current elapsed time since last activity: 680.164419ms
+Current elapsed time since last activity: 722.754269ms
+Current elapsed time since last activity: 722.79383ms
+Current elapsed time since last activity: 765.372909ms
+Current elapsed time since last activity: 765.407589ms
+Current elapsed time since last activity: 808.040029ms
+Current elapsed time since last activity: 808.092882ms
+Current elapsed time since last activity: 850.87092ms
+Current elapsed time since last activity: 850.906935ms
+Current elapsed time since last activity: 893.424695ms
+Current elapsed time since last activity: 893.460807ms
+Current elapsed time since last activity: 936.112647ms
+Current elapsed time since last activity: 936.172012ms
+Current elapsed time since last activity: 978.72504ms
+Current elapsed time since last activity: 978.76046ms
+Current elapsed time since last activity: 1.021344279s
+Current elapsed time since last activity: 1.021375716s
+Current elapsed time since last activity: 1.064093273s
+Current elapsed time since last activity: 1.064125408s
+Current elapsed time since last activity: 1.106813232s
+Current elapsed time since last activity: 1.106858165s
+Current elapsed time since last activity: 1.149403272s
+Current elapsed time since last activity: 1.149441577s
+Current elapsed time since last activity: 1.192064919s
+Current elapsed time since last activity: 1.192097632s
+Current elapsed time since last activity: 1.234809298s
+Current elapsed time since last activity: 1.234839798s
+Current elapsed time since last activity: 1.277404578s
+Current elapsed time since last activity: 1.27743518s
+Current elapsed time since last activity: 1.320016449s
+Current elapsed time since last activity: 1.320050535s
+Current elapsed time since last activity: 1.362670484s
+Current elapsed time since last activity: 1.362708943s
+Current elapsed time since last activity: 1.405474446s
+Current elapsed time since last activity: 1.405505745s
+Current elapsed time since last activity: 1.448099794s
+Current elapsed time since last activity: 1.44813083s
+Current elapsed time since last activity: 1.490904864s
+Current elapsed time since last activity: 1.490937069s
+Current elapsed time since last activity: 1.533361312s
+Current elapsed time since last activity: 1.533392437s
+Current elapsed time since last activity: 1.57615015s
+Current elapsed time since last activity: 1.57617728s
+Current elapsed time since last activity: 1.618728981s
+Current elapsed time since last activity: 1.618760732s
+Current elapsed time since last activity: 1.661420889s
+Current elapsed time since last activity: 1.66145548s
+Current elapsed time since last activity: 1.704043953s
+Current elapsed time since last activity: 1.704075613s
+Current elapsed time since last activity: 1.746767617s
+Current elapsed time since last activity: 1.746802876s
+Current elapsed time since last activity: 1.789379306s
+Current elapsed time since last activity: 1.789422427s
+Current elapsed time since last activity: 1.83209205s
+Current elapsed time since last activity: 1.832127077s
+Current elapsed time since last activity: 1.874843051s
+Current elapsed time since last activity: 1.874873581s
+Current elapsed time since last activity: 1.917485646s
+Current elapsed time since last activity: 1.917514575s
+Current elapsed time since last activity: 1.960116896s
+Current elapsed time since last activity: 1.9601669s
+Current elapsed time since last activity: 2.002717494s
+Current elapsed time since last activity: 2.002752192s
+Current elapsed time since last activity: 2.045326042s
+Current elapsed time since last activity: 2.045355379s
+Current elapsed time since last activity: 2.087968036s
+Current elapsed time since last activity: 2.088003134s
+Current elapsed time since last activity: 2.130932984s
+Current elapsed time since last activity: 2.130967948s
+Current elapsed time since last activity: 2.173480614s
+Current elapsed time since last activity: 2.173515308s
+Current elapsed time since last activity: 2.216009012s
+Current elapsed time since last activity: 2.216037857s
+Current elapsed time since last activity: 2.258677704s
+Current elapsed time since last activity: 2.258705418s
+Current elapsed time since last activity: 2.301439661s
+Current elapsed time since last activity: 2.301483337s
+Current elapsed time since last activity: 2.344037609s
+Current elapsed time since last activity: 2.344072027s
+Current elapsed time since last activity: 2.386738769s
+Current elapsed time since last activity: 2.386766682s
+Current elapsed time since last activity: 2.429352747s
+Current elapsed time since last activity: 2.429388145s
+Current elapsed time since last activity: 2.471990862s
+Current elapsed time since last activity: 2.472033085s
+Current elapsed time since last activity: 2.514717411s
+Current elapsed time since last activity: 2.514774589s
+Current elapsed time since last activity: 2.557351186s
+Current elapsed time since last activity: 2.55738827s
+Current elapsed time since last activity: 2.600063734s
+Current elapsed time since last activity: 2.600094026s
+Current elapsed time since last activity: 2.642688213s
+Current elapsed time since last activity: 2.642717564s
+Current elapsed time since last activity: 2.685496156s
+Current elapsed time since last activity: 2.6855255s
+Current elapsed time since last activity: 2.728036026s
+Current elapsed time since last activity: 2.728068514s
+Current elapsed time since last activity: 2.770656329s
+Current elapsed time since last activity: 2.770683034s
+Current elapsed time since last activity: 2.813302697s
+Current elapsed time since last activity: 2.813333218s
+Current elapsed time since last activity: 2.856070401s
+Current elapsed time since last activity: 2.856116723s
+Current elapsed time since last activity: 2.89881035s
+Current elapsed time since last activity: 2.898842329s
+Current elapsed time since last activity: 2.941383926s
+Current elapsed time since last activity: 2.941421974s
+Current elapsed time since last activity: 2.984164763s
+Current elapsed time since last activity: 2.984201906s
+Current elapsed time since last activity: 3.026780956s
+Current elapsed time since last activity: 3.026816235s
+Current elapsed time since last activity: 3.069377765s
+Current elapsed time since last activity: 3.069415854s
+Current elapsed time since last activity: 3.112122351s
+Voice detected, resetting last_active_time
+Voice detected, now waiting for silence...
+Current elapsed time since last activity: 33.837µs
+Entering wait_for_silence
+Voice detected, resetting last_active_time
+Current silence duration: 41.812µs
+Current elapsed time since last activity: 42.456074ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 13.146µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.838036ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 14.18µs
+Voice detected, resetting last_active_time
+Current silence duration: 14.700607ms
+Current elapsed time since last activity: 42.545381ms
+In silence, but duration not yet reached. Elapsed: 42.545381ms
+Current elapsed time since last activity: 42.581096ms
+In silence, but duration not yet reached. Elapsed: 42.581096ms
+Current elapsed time since last activity: 85.300468ms
+In silence, but duration not yet reached. Elapsed: 85.300468ms
+Current elapsed time since last activity: 85.346885ms
+In silence, but duration not yet reached. Elapsed: 85.346885ms
+Current silence duration: 114.783545ms
+Current elapsed time since last activity: 127.854464ms
+In silence, but duration not yet reached. Elapsed: 127.854464ms
+Current elapsed time since last activity: 127.890496ms
+In silence, but duration not yet reached. Elapsed: 127.890496ms
+Current elapsed time since last activity: 170.495357ms
+In silence, but duration not yet reached. Elapsed: 170.495357ms
+Current elapsed time since last activity: 170.530815ms
+In silence, but duration not yet reached. Elapsed: 170.530815ms
+Current elapsed time since last activity: 213.182718ms
+In silence, but duration not yet reached. Elapsed: 213.182718ms
+Current elapsed time since last activity: 213.217683ms
+In silence, but duration not yet reached. Elapsed: 213.217683ms
+Current silence duration: 214.862879ms
+Current elapsed time since last activity: 255.808888ms
+In silence, but duration not yet reached. Elapsed: 255.808888ms
+Current elapsed time since last activity: 255.851597ms
+In silence, but duration not yet reached. Elapsed: 255.851597ms
+Current elapsed time since last activity: 298.506133ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 15.976µs
+Voice detected, resetting last_active_time
+Current silence duration: 16.390417ms
+Current elapsed time since last activity: 42.591373ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.988µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 48.504654ms
+In silence, but duration not yet reached. Elapsed: 48.504654ms
+Current elapsed time since last activity: 48.558816ms
+In silence, but duration not yet reached. Elapsed: 48.558816ms
+Current silence duration: 75.585807ms
+Current elapsed time since last activity: 85.294695ms
+In silence, but duration not yet reached. Elapsed: 85.294695ms
+Current elapsed time since last activity: 85.351032ms
+In silence, but duration not yet reached. Elapsed: 85.351032ms
+Current elapsed time since last activity: 128.084768ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 9.829µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.486202ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.693µs
+Voice detected, resetting last_active_time
+Current silence duration: 5.319922ms
+Current elapsed time since last activity: 42.527354ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 10.774µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.621802ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 13.957µs
+Voice detected, resetting last_active_time
+Current silence duration: 20.190156ms
+Current elapsed time since last activity: 42.653367ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 9.846µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.668878ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 9.704µs
+Voice detected, resetting last_active_time
+Current silence duration: 34.91981ms
+Current elapsed time since last activity: 42.609835ms
+In silence, but duration not yet reached. Elapsed: 42.609835ms
+Current elapsed time since last activity: 42.671974ms
+In silence, but duration not yet reached. Elapsed: 42.671974ms
+Current elapsed time since last activity: 85.292989ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 11.337µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.644362ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.522µs
+Voice detected, resetting last_active_time
+Current silence duration: 7.006143ms
+Current elapsed time since last activity: 42.686023ms
+In silence, but duration not yet reached. Elapsed: 42.686023ms
+Current elapsed time since last activity: 42.727031ms
+In silence, but duration not yet reached. Elapsed: 42.727031ms
+Current elapsed time since last activity: 85.269043ms
+In silence, but duration not yet reached. Elapsed: 85.269043ms
+Current elapsed time since last activity: 85.305174ms
+In silence, but duration not yet reached. Elapsed: 85.305174ms
+Current silence duration: 107.101595ms
+Current elapsed time since last activity: 127.930652ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 15.893µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.709461ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.229µs
+Voice detected, resetting last_active_time
+Current silence duration: 36.438349ms
+Current elapsed time since last activity: 42.510388ms
+In silence, but duration not yet reached. Elapsed: 42.510388ms
+Current elapsed time since last activity: 42.550031ms
+In silence, but duration not yet reached. Elapsed: 42.550031ms
+Current elapsed time since last activity: 85.192147ms
+In silence, but duration not yet reached. Elapsed: 85.192147ms
+Current elapsed time since last activity: 85.230911ms
+In silence, but duration not yet reached. Elapsed: 85.230911ms
+Current elapsed time since last activity: 127.907341ms
+In silence, but duration not yet reached. Elapsed: 127.907341ms
+Current elapsed time since last activity: 127.948288ms
+In silence, but duration not yet reached. Elapsed: 127.948288ms
+Current silence duration: 136.522154ms
+Current elapsed time since last activity: 170.538284ms
+In silence, but duration not yet reached. Elapsed: 170.538284ms
+Current elapsed time since last activity: 170.57661ms
+In silence, but duration not yet reached. Elapsed: 170.57661ms
+Current elapsed time since last activity: 213.246261ms
+In silence, but duration not yet reached. Elapsed: 213.246261ms
+Current elapsed time since last activity: 213.283943ms
+In silence, but duration not yet reached. Elapsed: 213.283943ms
+Current silence duration: 236.608288ms
+Current elapsed time since last activity: 255.961529ms
+In silence, but duration not yet reached. Elapsed: 255.961529ms
+Current elapsed time since last activity: 255.996228ms
+In silence, but duration not yet reached. Elapsed: 255.996228ms
+Current elapsed time since last activity: 298.545019ms
+In silence, but duration not yet reached. Elapsed: 298.545019ms
+Current elapsed time since last activity: 298.587357ms
+In silence, but duration not yet reached. Elapsed: 298.587357ms
+Current silence duration: 336.742025ms
+Current elapsed time since last activity: 341.210028ms
+In silence, but duration not yet reached. Elapsed: 341.210028ms
+Current elapsed time since last activity: 341.268005ms
+In silence, but duration not yet reached. Elapsed: 341.268005ms
+Current elapsed time since last activity: 384.023062ms
+In silence, but duration not yet reached. Elapsed: 384.023062ms
+Current elapsed time since last activity: 384.060235ms
+In silence, but duration not yet reached. Elapsed: 384.060235ms
+Current elapsed time since last activity: 426.545111ms
+In silence, but duration not yet reached. Elapsed: 426.545111ms
+Current elapsed time since last activity: 426.584897ms
+In silence, but duration not yet reached. Elapsed: 426.584897ms
+Current silence duration: 436.855834ms
+Current elapsed time since last activity: 469.268813ms
+In silence, but duration not yet reached. Elapsed: 469.268813ms
+Current elapsed time since last activity: 469.305657ms
+In silence, but duration not yet reached. Elapsed: 469.305657ms
+Current elapsed time since last activity: 511.844641ms
+In silence, but duration not yet reached. Elapsed: 511.844641ms
+Current elapsed time since last activity: 511.876497ms
+In silence, but duration not yet reached. Elapsed: 511.876497ms
+Current silence duration: 536.938951ms
+Current elapsed time since last activity: 554.615224ms
+In silence, but duration not yet reached. Elapsed: 554.615224ms
+Current elapsed time since last activity: 554.651967ms
+In silence, but duration not yet reached. Elapsed: 554.651967ms
+Current elapsed time since last activity: 597.35844ms
+In silence, but duration not yet reached. Elapsed: 597.35844ms
+Current elapsed time since last activity: 597.395779ms
+In silence, but duration not yet reached. Elapsed: 597.395779ms
+Current silence duration: 637.021561ms
+Current elapsed time since last activity: 639.835567ms
+In silence, but duration not yet reached. Elapsed: 639.835567ms
+Current elapsed time since last activity: 639.867232ms
+In silence, but duration not yet reached. Elapsed: 639.867232ms
+Current elapsed time since last activity: 682.658803ms
+In silence, but duration not yet reached. Elapsed: 682.658803ms
+Current elapsed time since last activity: 682.694703ms
+In silence, but duration not yet reached. Elapsed: 682.694703ms
+Current elapsed time since last activity: 725.154375ms
+In silence, but duration not yet reached. Elapsed: 725.154375ms
+Current elapsed time since last activity: 725.190821ms
+In silence, but duration not yet reached. Elapsed: 725.190821ms
+Current silence duration: 737.127746ms
+Current elapsed time since last activity: 767.818599ms
+In silence, but duration not yet reached. Elapsed: 767.818599ms
+Current elapsed time since last activity: 767.853787ms
+In silence, but duration not yet reached. Elapsed: 767.853787ms
+Current elapsed time since last activity: 810.493738ms
+In silence, but duration not yet reached. Elapsed: 810.493738ms
+Current elapsed time since last activity: 810.538887ms
+In silence, but duration not yet reached. Elapsed: 810.538887ms
+Current silence duration: 837.25907ms
+Current elapsed time since last activity: 853.204773ms
+In silence, but duration not yet reached. Elapsed: 853.204773ms
+Current elapsed time since last activity: 853.245391ms
+In silence, but duration not yet reached. Elapsed: 853.245391ms
+Current elapsed time since last activity: 895.922035ms
+In silence, but duration not yet reached. Elapsed: 895.922035ms
+Current elapsed time since last activity: 895.962246ms
+In silence, but duration not yet reached. Elapsed: 895.962246ms
+Current silence duration: 937.385735ms
+Current elapsed time since last activity: 938.440708ms
+In silence, but duration not yet reached. Elapsed: 938.440708ms
+Current elapsed time since last activity: 938.467165ms
+In silence, but duration not yet reached. Elapsed: 938.467165ms
+Current elapsed time since last activity: 981.231468ms
+In silence, but duration not yet reached. Elapsed: 981.231468ms
+Current elapsed time since last activity: 981.273856ms
+In silence, but duration not yet reached. Elapsed: 981.273856ms
+Current elapsed time since last activity: 1.023809212s
+In silence, but duration not yet reached. Elapsed: 1.023809212s
+Current elapsed time since last activity: 1.023852501s
+In silence, but duration not yet reached. Elapsed: 1.023852501s
+Current silence duration: 1.037476554s
+Current elapsed time since last activity: 1.066497727s
+In silence, but duration not yet reached. Elapsed: 1.066497727s
+Current elapsed time since last activity: 1.066534332s
+In silence, but duration not yet reached. Elapsed: 1.066534332s
+Current elapsed time since last activity: 1.109157648s
+In silence, but duration not yet reached. Elapsed: 1.109157648s
+Current elapsed time since last activity: 1.109193595s
+In silence, but duration not yet reached. Elapsed: 1.109193595s
+Current silence duration: 1.137561299s
+Current elapsed time since last activity: 1.151866393s
+In silence, but duration not yet reached. Elapsed: 1.151866393s
+Current elapsed time since last activity: 1.151896673s
+In silence, but duration not yet reached. Elapsed: 1.151896673s
+Current elapsed time since last activity: 1.194596743s
+In silence, but duration not yet reached. Elapsed: 1.194596743s
+Current elapsed time since last activity: 1.194631419s
+In silence, but duration not yet reached. Elapsed: 1.194631419s
+Current elapsed time since last activity: 1.237284312s
+In silence, but duration not yet reached. Elapsed: 1.237284312s
+Current elapsed time since last activity: 1.237321963s
+In silence, but duration not yet reached. Elapsed: 1.237321963s
+Current silence duration: 1.237643464s
+Current elapsed time since last activity: 1.28006318s
+In silence, but duration not yet reached. Elapsed: 1.28006318s
+Current elapsed time since last activity: 1.280099404s
+In silence, but duration not yet reached. Elapsed: 1.280099404s
+Current elapsed time since last activity: 1.322624987s
+In silence, but duration not yet reached. Elapsed: 1.322624987s
+Current elapsed time since last activity: 1.322665609s
+In silence, but duration not yet reached. Elapsed: 1.322665609s
+Current silence duration: 1.337715371s
+Current elapsed time since last activity: 1.365271613s
+In silence, but duration not yet reached. Elapsed: 1.365271613s
+Current elapsed time since last activity: 1.365301833s
+In silence, but duration not yet reached. Elapsed: 1.365301833s
+Current elapsed time since last activity: 1.407829374s
+In silence, but duration not yet reached. Elapsed: 1.407829374s
+Current elapsed time since last activity: 1.407877798s
+In silence, but duration not yet reached. Elapsed: 1.407877798s
+Current silence duration: 1.43784689s
+Current elapsed time since last activity: 1.450573183s
+In silence, but duration not yet reached. Elapsed: 1.450573183s
+Current elapsed time since last activity: 1.450603895s
+In silence, but duration not yet reached. Elapsed: 1.450603895s
+Current elapsed time since last activity: 1.493196702s
+In silence, but duration not yet reached. Elapsed: 1.493196702s
+Current elapsed time since last activity: 1.493250167s
+In silence, but duration not yet reached. Elapsed: 1.493250167s
+Current elapsed time since last activity: 1.53595251s
+In silence, but duration not yet reached. Elapsed: 1.53595251s
+Current elapsed time since last activity: 1.535996918s
+In silence, but duration not yet reached. Elapsed: 1.535996918s
+Current silence duration: 1.537983449s
+Current elapsed time since last activity: 1.578498095s
+In silence, but duration not yet reached. Elapsed: 1.578498095s
+Current elapsed time since last activity: 1.578550669s
+In silence, but duration not yet reached. Elapsed: 1.578550669s
+Current elapsed time since last activity: 1.621305672s
+In silence, but duration not yet reached. Elapsed: 1.621305672s
+Current elapsed time since last activity: 1.621390946s
+In silence, but duration not yet reached. Elapsed: 1.621390946s
+Current silence duration: 1.638108985s
+Current elapsed time since last activity: 1.663919012s
+In silence, but duration not yet reached. Elapsed: 1.663919012s
+Current elapsed time since last activity: 1.663976012s
+In silence, but duration not yet reached. Elapsed: 1.663976012s
+Current elapsed time since last activity: 1.706595717s
+In silence, but duration not yet reached. Elapsed: 1.706595717s
+Current elapsed time since last activity: 1.706644652s
+In silence, but duration not yet reached. Elapsed: 1.706644652s
+Current silence duration: 1.738201533s
+Current elapsed time since last activity: 1.749151248s
+In silence, but duration not yet reached. Elapsed: 1.749151248s
+Current elapsed time since last activity: 1.749182337s
+In silence, but duration not yet reached. Elapsed: 1.749182337s
+Current elapsed time since last activity: 1.792062435s
+In silence, but duration not yet reached. Elapsed: 1.792062435s
+Current elapsed time since last activity: 1.792100675s
+In silence, but duration not yet reached. Elapsed: 1.792100675s
+Current elapsed time since last activity: 1.834572139s
+In silence, but duration not yet reached. Elapsed: 1.834572139s
+Current elapsed time since last activity: 1.834612552s
+In silence, but duration not yet reached. Elapsed: 1.834612552s
+Current silence duration: 1.838311434s
+Current elapsed time since last activity: 1.877230302s
+In silence, but duration not yet reached. Elapsed: 1.877230302s
+Current elapsed time since last activity: 1.877280252s
+In silence, but duration not yet reached. Elapsed: 1.877280252s
+Current elapsed time since last activity: 1.919837144s
+In silence, but duration not yet reached. Elapsed: 1.919837144s
+Current elapsed time since last activity: 1.919876098s
+In silence, but duration not yet reached. Elapsed: 1.919876098s
+Current silence duration: 1.938421084s
+Current elapsed time since last activity: 1.962511114s
+In silence, but duration not yet reached. Elapsed: 1.962511114s
+Current elapsed time since last activity: 1.962542422s
+In silence, but duration not yet reached. Elapsed: 1.962542422s
+Current elapsed time since last activity: 2.005362572s
+Silence duration reached after 2.005362572s
+Current silence duration: 2.03851041s
+Silence duration reached: 2.03851041s
+Exiting wait_for_silence
+Silence detected, finishing recording for sentence: 한국이야.
+Finished processing sentence 3/1298
+Processing sentence 4/1298: 너는 친구야.
+Starting to record sentence: 너는 친구야.
+Audio stream started for sentence: 너는 친구야.
+Waiting for voice to be detected...
+Current elapsed time since last activity: 50.514925ms
+Current elapsed time since last activity: 93.186448ms
+Current elapsed time since last activity: 93.217637ms
+Current elapsed time since last activity: 135.833481ms
+Current elapsed time since last activity: 135.873602ms
+Current elapsed time since last activity: 178.57086ms
+Current elapsed time since last activity: 178.597346ms
+Current elapsed time since last activity: 221.152775ms
+Current elapsed time since last activity: 221.190481ms
+Current elapsed time since last activity: 264.079775ms
+Current elapsed time since last activity: 264.113541ms
+Current elapsed time since last activity: 306.503072ms
+Current elapsed time since last activity: 306.53072ms
+Current elapsed time since last activity: 349.503268ms
+Current elapsed time since last activity: 349.537291ms
+Current elapsed time since last activity: 391.862114ms
+Current elapsed time since last activity: 391.890885ms
+Current elapsed time since last activity: 434.512808ms
+Current elapsed time since last activity: 434.541845ms
+Current elapsed time since last activity: 477.349615ms
+Current elapsed time since last activity: 477.388108ms
+Current elapsed time since last activity: 519.880313ms
+Current elapsed time since last activity: 519.92196ms
+Current elapsed time since last activity: 562.523031ms
+Current elapsed time since last activity: 562.557482ms
+Current elapsed time since last activity: 605.179268ms
+Current elapsed time since last activity: 605.219075ms
+Current elapsed time since last activity: 647.911553ms
+Current elapsed time since last activity: 647.940769ms
+Current elapsed time since last activity: 690.551078ms
+Current elapsed time since last activity: 690.578999ms
+Current elapsed time since last activity: 733.220965ms
+Current elapsed time since last activity: 733.257389ms
+Current elapsed time since last activity: 775.936874ms
+Current elapsed time since last activity: 775.970341ms
+Current elapsed time since last activity: 818.512609ms
+Current elapsed time since last activity: 818.561824ms
+Current elapsed time since last activity: 861.171877ms
+Current elapsed time since last activity: 861.201605ms
+Current elapsed time since last activity: 903.844972ms
+Current elapsed time since last activity: 903.935815ms
+Current elapsed time since last activity: 946.528253ms
+Current elapsed time since last activity: 946.565222ms
+Current elapsed time since last activity: 989.187775ms
+Current elapsed time since last activity: 989.224648ms
+Current elapsed time since last activity: 1.031945604s
+Current elapsed time since last activity: 1.03199395s
+Current elapsed time since last activity: 1.074526034s
+Current elapsed time since last activity: 1.074567312s
+Current elapsed time since last activity: 1.117182426s
+Current elapsed time since last activity: 1.117216268s
+Current elapsed time since last activity: 1.159833853s
+Current elapsed time since last activity: 1.159862949s
+Current elapsed time since last activity: 1.20254874s
+Current elapsed time since last activity: 1.20257875s
+Current elapsed time since last activity: 1.245282519s
+Current elapsed time since last activity: 1.245311653s
+Current elapsed time since last activity: 1.287856237s
+Current elapsed time since last activity: 1.28789879s
+Current elapsed time since last activity: 1.330630113s
+Current elapsed time since last activity: 1.330661007s
+Current elapsed time since last activity: 1.373152302s
+Current elapsed time since last activity: 1.373191204s
+Current elapsed time since last activity: 1.415781442s
+Current elapsed time since last activity: 1.415811399s
+Current elapsed time since last activity: 1.45847627s
+Current elapsed time since last activity: 1.458506916s
+Current elapsed time since last activity: 1.501123127s
+Current elapsed time since last activity: 1.501159327s
+Current elapsed time since last activity: 1.543812044s
+Current elapsed time since last activity: 1.543852646s
+Current elapsed time since last activity: 1.586483659s
+Current elapsed time since last activity: 1.586521922s
+Current elapsed time since last activity: 1.629202746s
+Current elapsed time since last activity: 1.629241953s
+Current elapsed time since last activity: 1.671831443s
+Current elapsed time since last activity: 1.671866877s
+Current elapsed time since last activity: 1.714607044s
+Current elapsed time since last activity: 1.714644524s
+Current elapsed time since last activity: 1.757237608s
+Current elapsed time since last activity: 1.757269947s
+Current elapsed time since last activity: 1.799862268s
+Current elapsed time since last activity: 1.79990183s
+Current elapsed time since last activity: 1.842556095s
+Current elapsed time since last activity: 1.84258318s
+Current elapsed time since last activity: 1.885158529s
+Current elapsed time since last activity: 1.88518739s
+Current elapsed time since last activity: 1.932010072s
+Current elapsed time since last activity: 1.932054719s
+Current elapsed time since last activity: 1.970537705s
+Current elapsed time since last activity: 1.970587307s
+Current elapsed time since last activity: 2.013173891s
+Current elapsed time since last activity: 2.013207671s
+Current elapsed time since last activity: 2.055739505s
+Current elapsed time since last activity: 2.055770383s
+Current elapsed time since last activity: 2.098426201s
+Current elapsed time since last activity: 2.09845494s
+Current elapsed time since last activity: 2.141131787s
+Current elapsed time since last activity: 2.141169767s
+Current elapsed time since last activity: 2.183822276s
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 53.783µs
+Voice detected, resetting last_active_time
+Voice detected, now waiting for silence...
+Entering wait_for_silence
+Current silence duration: 50.235µs
+Current elapsed time since last activity: 42.483489ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 13.05µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.603182ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 17.04µs
+Voice detected, resetting last_active_time
+Current silence duration: 14.922467ms
+Current elapsed time since last activity: 42.877786ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.522µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.413652ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 12.061µs
+Voice detected, resetting last_active_time
+Current silence duration: 29.656474ms
+Current elapsed time since last activity: 42.769805ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.431µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.480835ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 6.928µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.834517ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 6.514µs
+Voice detected, resetting last_active_time
+Current silence duration: 1.577645ms
+Current elapsed time since last activity: 42.518292ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 13.644µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.500277ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.248µs
+Voice detected, resetting last_active_time
+Current silence duration: 16.536199ms
+Current elapsed time since last activity: 42.613275ms
+In silence, but duration not yet reached. Elapsed: 42.613275ms
+Current elapsed time since last activity: 42.648527ms
+In silence, but duration not yet reached. Elapsed: 42.648527ms
+Current elapsed time since last activity: 85.306765ms
+In silence, but duration not yet reached. Elapsed: 85.306765ms
+Current elapsed time since last activity: 85.366512ms
+In silence, but duration not yet reached. Elapsed: 85.366512ms
+Current silence duration: 116.639252ms
+Current elapsed time since last activity: 127.96608ms
+In silence, but duration not yet reached. Elapsed: 127.96608ms
+Current elapsed time since last activity: 128.010024ms
+In silence, but duration not yet reached. Elapsed: 128.010024ms
+Current elapsed time since last activity: 170.689128ms
+In silence, but duration not yet reached. Elapsed: 170.689128ms
+Current elapsed time since last activity: 170.730515ms
+In silence, but duration not yet reached. Elapsed: 170.730515ms
+Current elapsed time since last activity: 213.469185ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 22.294µs
+Voice detected, resetting last_active_time
+Current silence duration: 3.203024ms
+Current elapsed time since last activity: 42.520633ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 9.442µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.750354ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 15.276µs
+Voice detected, resetting last_active_time
+Current silence duration: 17.918212ms
+Current elapsed time since last activity: 42.488646ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 10.336µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.554958ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 9.607µs
+Voice detected, resetting last_active_time
+Current silence duration: 32.908846ms
+Current elapsed time since last activity: 42.749122ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 10.121µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.54308ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 11.398µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.627228ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 10.036µs
+Voice detected, resetting last_active_time
+Current silence duration: 4.934356ms
+Current elapsed time since last activity: 42.630088ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 12.621µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.581604ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 9.615µs
+Voice detected, resetting last_active_time
+Current silence duration: 19.734689ms
+Current elapsed time since last activity: 42.598807ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 11.6µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.57625ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.003µs
+Voice detected, resetting last_active_time
+Current silence duration: 34.548285ms
+Current elapsed time since last activity: 42.628598ms
+In silence, but duration not yet reached. Elapsed: 42.628598ms
+Current elapsed time since last activity: 42.67006ms
+In silence, but duration not yet reached. Elapsed: 42.67006ms
+Current elapsed time since last activity: 85.402688ms
+In silence, but duration not yet reached. Elapsed: 85.402688ms
+Current elapsed time since last activity: 85.442152ms
+In silence, but duration not yet reached. Elapsed: 85.442152ms
+Current elapsed time since last activity: 128.019893ms
+In silence, but duration not yet reached. Elapsed: 128.019893ms
+Current elapsed time since last activity: 128.05599ms
+In silence, but duration not yet reached. Elapsed: 128.05599ms
+Current silence duration: 134.650832ms
+Current elapsed time since last activity: 170.750375ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.196µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.46069ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 7.492µs
+Voice detected, resetting last_active_time
+Current silence duration: 21.440522ms
+Current elapsed time since last activity: 42.704827ms
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 6.906µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.643131ms
+In silence, but duration not yet reached. Elapsed: 42.643131ms
+Current elapsed time since last activity: 42.68307ms
+In silence, but duration not yet reached. Elapsed: 42.68307ms
+Current silence duration: 78.786743ms
+Current elapsed time since last activity: 85.225126ms
+In silence, but duration not yet reached. Elapsed: 85.225126ms
+Current elapsed time since last activity: 85.256947ms
+In silence, but duration not yet reached. Elapsed: 85.256947ms
+Current elapsed time since last activity: 127.969082ms
+In silence, but duration not yet reached. Elapsed: 127.969082ms
+Current elapsed time since last activity: 128.032709ms
+In silence, but duration not yet reached. Elapsed: 128.032709ms
+Current elapsed time since last activity: 170.63435ms
+In silence, but duration not yet reached. Elapsed: 170.63435ms
+Current elapsed time since last activity: 170.666853ms
+In silence, but duration not yet reached. Elapsed: 170.666853ms
+Current silence duration: 178.872624ms
+Current elapsed time since last activity: 213.419229ms
+In silence, but duration not yet reached. Elapsed: 213.419229ms
+Current elapsed time since last activity: 213.453147ms
+In silence, but duration not yet reached. Elapsed: 213.453147ms
+Current elapsed time since last activity: 256.033499ms
+In silence, but duration not yet reached. Elapsed: 256.033499ms
+Current elapsed time since last activity: 256.07232ms
+In silence, but duration not yet reached. Elapsed: 256.07232ms
+Current silence duration: 278.953478ms
+Current elapsed time since last activity: 298.55729ms
+In silence, but duration not yet reached. Elapsed: 298.55729ms
+Current elapsed time since last activity: 298.595586ms
+In silence, but duration not yet reached. Elapsed: 298.595586ms
+Current elapsed time since last activity: 341.247554ms
+In silence, but duration not yet reached. Elapsed: 341.247554ms
+Current elapsed time since last activity: 341.287973ms
+In silence, but duration not yet reached. Elapsed: 341.287973ms
+Current silence duration: 379.036849ms
+Current elapsed time since last activity: 383.908705ms
+In silence, but duration not yet reached. Elapsed: 383.908705ms
+Current elapsed time since last activity: 383.94351ms
+In silence, but duration not yet reached. Elapsed: 383.94351ms
+Current elapsed time since last activity: 426.713014ms
+In silence, but duration not yet reached. Elapsed: 426.713014ms
+Current elapsed time since last activity: 426.752775ms
+In silence, but duration not yet reached. Elapsed: 426.752775ms
+Current elapsed time since last activity: 469.237736ms
+In silence, but duration not yet reached. Elapsed: 469.237736ms
+Current elapsed time since last activity: 469.278413ms
+In silence, but duration not yet reached. Elapsed: 469.278413ms
+Current silence duration: 479.142443ms
+Current elapsed time since last activity: 511.888026ms
+In silence, but duration not yet reached. Elapsed: 511.888026ms
+Current elapsed time since last activity: 511.924236ms
+In silence, but duration not yet reached. Elapsed: 511.924236ms
+Current elapsed time since last activity: 554.678637ms
+In silence, but duration not yet reached. Elapsed: 554.678637ms
+Current elapsed time since last activity: 554.711018ms
+In silence, but duration not yet reached. Elapsed: 554.711018ms
+Current silence duration: 579.228602ms
+Current elapsed time since last activity: 597.294171ms
+In silence, but duration not yet reached. Elapsed: 597.294171ms
+Current elapsed time since last activity: 597.350298ms
+In silence, but duration not yet reached. Elapsed: 597.350298ms
+Current elapsed time since last activity: 640.043086ms
+In silence, but duration not yet reached. Elapsed: 640.043086ms
+Current elapsed time since last activity: 640.070752ms
+In silence, but duration not yet reached. Elapsed: 640.070752ms
+Current silence duration: 679.317763ms
+Current elapsed time since last activity: 682.600343ms
+In silence, but duration not yet reached. Elapsed: 682.600343ms
+Current elapsed time since last activity: 682.630831ms
+In silence, but duration not yet reached. Elapsed: 682.630831ms
+Current elapsed time since last activity: 725.323917ms
+In silence, but duration not yet reached. Elapsed: 725.323917ms
+Current elapsed time since last activity: 725.355096ms
+In silence, but duration not yet reached. Elapsed: 725.355096ms
+Current elapsed time since last activity: 768.092501ms
+In silence, but duration not yet reached. Elapsed: 768.092501ms
+Current elapsed time since last activity: 768.129338ms
+In silence, but duration not yet reached. Elapsed: 768.129338ms
+Current silence duration: 779.404955ms
+Current elapsed time since last activity: 810.678933ms
+In silence, but duration not yet reached. Elapsed: 810.678933ms
+Current elapsed time since last activity: 810.70967ms
+In silence, but duration not yet reached. Elapsed: 810.70967ms
+Current elapsed time since last activity: 853.441028ms
+In silence, but duration not yet reached. Elapsed: 853.441028ms
+Current elapsed time since last activity: 853.478785ms
+In silence, but duration not yet reached. Elapsed: 853.478785ms
+Current silence duration: 879.579764ms
+Current elapsed time since last activity: 896.000446ms
+In silence, but duration not yet reached. Elapsed: 896.000446ms
+Current elapsed time since last activity: 896.04197ms
+In silence, but duration not yet reached. Elapsed: 896.04197ms
+Current elapsed time since last activity: 938.665238ms
+In silence, but duration not yet reached. Elapsed: 938.665238ms
+Current elapsed time since last activity: 938.704135ms
+In silence, but duration not yet reached. Elapsed: 938.704135ms
+Current silence duration: 979.696101ms
+Current elapsed time since last activity: 981.276927ms
+In silence, but duration not yet reached. Elapsed: 981.276927ms
+Current elapsed time since last activity: 981.318737ms
+In silence, but duration not yet reached. Elapsed: 981.318737ms
+Current elapsed time since last activity: 1.023922871s
+In silence, but duration not yet reached. Elapsed: 1.023922871s
+Current elapsed time since last activity: 1.023970432s
+In silence, but duration not yet reached. Elapsed: 1.023970432s
+Current elapsed time since last activity: 1.066666686s
+In silence, but duration not yet reached. Elapsed: 1.066666686s
+Current elapsed time since last activity: 1.066702973s
+In silence, but duration not yet reached. Elapsed: 1.066702973s
+Current silence duration: 1.079788142s
+Current elapsed time since last activity: 1.1092669s
+In silence, but duration not yet reached. Elapsed: 1.1092669s
+Current elapsed time since last activity: 1.109300358s
+In silence, but duration not yet reached. Elapsed: 1.109300358s
+Current elapsed time since last activity: 1.151923294s
+In silence, but duration not yet reached. Elapsed: 1.151923294s
+Current elapsed time since last activity: 1.151960048s
+In silence, but duration not yet reached. Elapsed: 1.151960048s
+Current silence duration: 1.179922719s
+Current elapsed time since last activity: 1.194721622s
+In silence, but duration not yet reached. Elapsed: 1.194721622s
+Current elapsed time since last activity: 1.194757327s
+In silence, but duration not yet reached. Elapsed: 1.194757327s
+Current elapsed time since last activity: 1.237306738s
+In silence, but duration not yet reached. Elapsed: 1.237306738s
+Current elapsed time since last activity: 1.237342193s
+In silence, but duration not yet reached. Elapsed: 1.237342193s
+Current elapsed time since last activity: 1.279978988s
+In silence, but duration not yet reached. Elapsed: 1.279978988s
+Current silence duration: 1.280007262s
+Current elapsed time since last activity: 1.28003493s
+In silence, but duration not yet reached. Elapsed: 1.28003493s
+Current elapsed time since last activity: 1.322671094s
+In silence, but duration not yet reached. Elapsed: 1.322671094s
+Current elapsed time since last activity: 1.322712198s
+In silence, but duration not yet reached. Elapsed: 1.322712198s
+Current elapsed time since last activity: 1.365267824s
+In silence, but duration not yet reached. Elapsed: 1.365267824s
+Current elapsed time since last activity: 1.365303464s
+In silence, but duration not yet reached. Elapsed: 1.365303464s
+Current silence duration: 1.380103123s
+Current elapsed time since last activity: 1.408110164s
+In silence, but duration not yet reached. Elapsed: 1.408110164s
+Current elapsed time since last activity: 1.408147805s
+In silence, but duration not yet reached. Elapsed: 1.408147805s
+Current elapsed time since last activity: 1.450676066s
+In silence, but duration not yet reached. Elapsed: 1.450676066s
+Current elapsed time since last activity: 1.45071142s
+In silence, but duration not yet reached. Elapsed: 1.45071142s
+Current silence duration: 1.480208926s
+Current elapsed time since last activity: 1.493442108s
+In silence, but duration not yet reached. Elapsed: 1.493442108s
+Current elapsed time since last activity: 1.493476198s
+In silence, but duration not yet reached. Elapsed: 1.493476198s
+Current elapsed time since last activity: 1.53608924s
+In silence, but duration not yet reached. Elapsed: 1.53608924s
+Current elapsed time since last activity: 1.536133964s
+In silence, but duration not yet reached. Elapsed: 1.536133964s
+Current elapsed time since last activity: 1.578724463s
+In silence, but duration not yet reached. Elapsed: 1.578724463s
+Current elapsed time since last activity: 1.578756632s
+In silence, but duration not yet reached. Elapsed: 1.578756632s
+Current silence duration: 1.580298688s
+Current elapsed time since last activity: 1.621442287s
+In silence, but duration not yet reached. Elapsed: 1.621442287s
+Current elapsed time since last activity: 1.621480414s
+In silence, but duration not yet reached. Elapsed: 1.621480414s
+Current elapsed time since last activity: 1.664010414s
+In silence, but duration not yet reached. Elapsed: 1.664010414s
+Current elapsed time since last activity: 1.664060231s
+In silence, but duration not yet reached. Elapsed: 1.664060231s
+Current silence duration: 1.680407588s
+Current elapsed time since last activity: 1.706672783s
+In silence, but duration not yet reached. Elapsed: 1.706672783s
+Current elapsed time since last activity: 1.706724735s
+In silence, but duration not yet reached. Elapsed: 1.706724735s
+Current elapsed time since last activity: 1.749502917s
+In silence, but duration not yet reached. Elapsed: 1.749502917s
+Current elapsed time since last activity: 1.749537316s
+In silence, but duration not yet reached. Elapsed: 1.749537316s
+Current silence duration: 1.780503175s
+Current elapsed time since last activity: 1.792010703s
+In silence, but duration not yet reached. Elapsed: 1.792010703s
+Current elapsed time since last activity: 1.792042327s
+In silence, but duration not yet reached. Elapsed: 1.792042327s
+Current elapsed time since last activity: 1.834670558s
+In silence, but duration not yet reached. Elapsed: 1.834670558s
+Current elapsed time since last activity: 1.834703421s
+In silence, but duration not yet reached. Elapsed: 1.834703421s
+Current elapsed time since last activity: 1.877295689s
+In silence, but duration not yet reached. Elapsed: 1.877295689s
+Current elapsed time since last activity: 1.877331691s
+In silence, but duration not yet reached. Elapsed: 1.877331691s
+Current silence duration: 1.880620139s
+Current elapsed time since last activity: 1.92002901s
+In silence, but duration not yet reached. Elapsed: 1.92002901s
+Current elapsed time since last activity: 1.920061282s
+In silence, but duration not yet reached. Elapsed: 1.920061282s
+Current elapsed time since last activity: 1.96262438s
+In silence, but duration not yet reached. Elapsed: 1.96262438s
+Current elapsed time since last activity: 1.962671716s
+In silence, but duration not yet reached. Elapsed: 1.962671716s
+Current silence duration: 1.980739263s
+Current elapsed time since last activity: 2.00530551s
+Silence duration reached after 2.00530551s
+Current elapsed time since last activity: 2.047968347s
+Current elapsed time since last activity: 2.048012308s
+Current silence duration: 2.08084877s
+Silence duration reached: 2.08084877s
+Exiting wait_for_silence
+Silence detected, finishing recording for sentence: 너는 친구야.
+Finished processing sentence 4/1298
+Processing sentence 5/1298: 한국은 친구야.
+Starting to record sentence: 한국은 친구야.
+Audio stream started for sentence: 한국은 친구야.
+Waiting for voice to be detected...
+Current elapsed time since last activity: 50.763058ms
+Current elapsed time since last activity: 93.393659ms
+Current elapsed time since last activity: 93.424985ms
+Current elapsed time since last activity: 136.076905ms
+Current elapsed time since last activity: 136.111869ms
+Current elapsed time since last activity: 178.69965ms
+Current elapsed time since last activity: 178.743898ms
+Current elapsed time since last activity: 221.421419ms
+Current elapsed time since last activity: 221.451091ms
+Current elapsed time since last activity: 264.08885ms
+Current elapsed time since last activity: 264.136264ms
+Current elapsed time since last activity: 306.852258ms
+Current elapsed time since last activity: 306.890474ms
+Current elapsed time since last activity: 349.422193ms
+Current elapsed time since last activity: 349.468272ms
+Current elapsed time since last activity: 392.069123ms
+Current elapsed time since last activity: 392.100748ms
+Current elapsed time since last activity: 434.737308ms
+Current elapsed time since last activity: 434.772569ms
+Current elapsed time since last activity: 477.440347ms
+Current elapsed time since last activity: 477.475768ms
+Current elapsed time since last activity: 520.172326ms
+Current elapsed time since last activity: 520.200493ms
+Current elapsed time since last activity: 562.767639ms
+Current elapsed time since last activity: 562.795236ms
+Current elapsed time since last activity: 605.372593ms
+Current elapsed time since last activity: 605.400905ms
+Current elapsed time since last activity: 648.046374ms
+Current elapsed time since last activity: 648.099315ms
+Current elapsed time since last activity: 690.684034ms
+Current elapsed time since last activity: 690.716451ms
+Current elapsed time since last activity: 733.341106ms
+Current elapsed time since last activity: 733.370255ms
+Current elapsed time since last activity: 776.197755ms
+Current elapsed time since last activity: 776.230166ms
+Current elapsed time since last activity: 818.841597ms
+Current elapsed time since last activity: 818.872616ms
+Current elapsed time since last activity: 861.38768ms
+Current elapsed time since last activity: 861.431987ms
+Current elapsed time since last activity: 904.045234ms
+Current elapsed time since last activity: 904.07176ms
+Current elapsed time since last activity: 946.787847ms
+Current elapsed time since last activity: 946.820056ms
+Current elapsed time since last activity: 989.474558ms
+Current elapsed time since last activity: 989.502404ms
+Current elapsed time since last activity: 1.032051489s
+Current elapsed time since last activity: 1.032094055s
+Current elapsed time since last activity: 1.07473636s
+Current elapsed time since last activity: 1.074768293s
+Current elapsed time since last activity: 1.117367365s
+Current elapsed time since last activity: 1.117406644s
+Current elapsed time since last activity: 1.160041404s
+Current elapsed time since last activity: 1.160068s
+Current elapsed time since last activity: 1.20267253s
+Current elapsed time since last activity: 1.202701754s
+Current elapsed time since last activity: 1.245343631s
+Current elapsed time since last activity: 1.245374633s
+Current elapsed time since last activity: 1.288033484s
+Current elapsed time since last activity: 1.288066045s
+Current elapsed time since last activity: 1.330678296s
+Current elapsed time since last activity: 1.330709158s
+Current elapsed time since last activity: 1.373384454s
+Current elapsed time since last activity: 1.373416723s
+Current elapsed time since last activity: 1.417236333s
+Current elapsed time since last activity: 1.417280909s
+Current elapsed time since last activity: 1.458724714s
+Current elapsed time since last activity: 1.458957101s
+Current elapsed time since last activity: 1.501387373s
+Current elapsed time since last activity: 1.50142489s
+Current elapsed time since last activity: 1.544094452s
+Current elapsed time since last activity: 1.544140216s
+Current elapsed time since last activity: 1.586711349s
+Current elapsed time since last activity: 1.58674354s
+Current elapsed time since last activity: 1.629344404s
+Current elapsed time since last activity: 1.62937766s
+Current elapsed time since last activity: 1.672145894s
+Current elapsed time since last activity: 1.672173918s
+Current elapsed time since last activity: 1.714792297s
+Current elapsed time since last activity: 1.714843745s
+Current elapsed time since last activity: 1.757483147s
+Current elapsed time since last activity: 1.757515214s
+Current elapsed time since last activity: 1.800092513s
+Current elapsed time since last activity: 1.800117462s
+Current elapsed time since last activity: 1.842825736s
+Current elapsed time since last activity: 1.842857338s
+Current elapsed time since last activity: 1.886002445s
+Voice detected, resetting last_active_time
+Voice detected, now waiting for silence...
+Entering wait_for_silence
+Current silence duration: 31.296µs
+Current elapsed time since last activity: 32.311µs
+Voice detected, resetting last_active_time
+Current elapsed time since last activity: 42.379477ms
+In silence, but duration not yet reached. Elapsed: 42.379477ms
+Current elapsed time since last activity: 42.442754ms
+In silence, but duration not yet reached. Elapsed: 42.442754ms
+Current elapsed time since last activity: 84.769081ms
+In silence, but duration not yet reached. Elapsed: 84.769081ms
+Current elapsed time since last activity: 84.804906ms
+In silence, but duration not yet reached. Elapsed: 84.804906ms
+Current silence duration: 100.058844ms
