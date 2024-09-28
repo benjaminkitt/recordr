@@ -1,32 +1,177 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{SampleFormat, Stream, SupportedStreamConfig};
+use cpal::{Device, SampleFormat, Stream, SupportedStreamConfig};
 use hound::{WavSpec, WavWriter, SampleFormat as HoundSampleFormat};
 use std::cell::RefCell;
 use std::fs::File;
+use std::fmt;
 use std::io::BufWriter;
 use std::sync::{Arc, Mutex};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 use tauri::State;
 use webrtc_vad::{SampleRate, Vad, VadMode};
 use crossbeam_channel::{bounded, Sender};
 use crate::models::{Sentence, RecorderError};
 
+struct DeviceWrapper(Device);
+
+impl fmt::Debug for DeviceWrapper {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Device({})", self.0.name().unwrap_or_default())
+    }
+}
+
+#[derive(Debug)]
+struct AudioConfig {
+    device: DeviceWrapper,
+    config: SupportedStreamConfig,
+    sample_rate: usize,
+}
+
+// Enum for recording state
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum RecordingState {
+    Idle,
+    Recording,
+    Paused,
+}
+
+// Main AutoRecordState struct
+#[derive(Debug)]
+struct AutoRecordState {
+    sentences: Vec<Sentence>,
+    project_directory: String,
+    silence_threshold: f32,
+    silence_duration: Duration,
+    silence_padding: Duration,
+    current_sentence_index: usize,
+    audio_config: AudioConfig,
+    state: RecordingState,
+    is_speaking: Arc<Mutex<bool>>,
+    last_active_time: Arc<Mutex<Instant>>,
+}
+
+impl AutoRecordState {
+    // State transition methods
+    fn start_recording(&mut self) -> Result<(), &'static str> {
+        match self.state {
+            RecordingState::Idle => {
+                self.state = RecordingState::Recording;
+                Ok(())
+            },
+            _ => Err("Can only start recording from Idle state"),
+        }
+    }
+
+    fn pause_recording(&mut self) -> Result<(), &'static str> {
+        match self.state {
+            RecordingState::Recording => {
+                self.state = RecordingState::Paused;
+                Ok(())
+            },
+            _ => Err("Can only pause from Recording state"),
+        }
+    }
+
+    fn resume_recording(&mut self) -> Result<(), &'static str> {
+        match self.state {
+            RecordingState::Paused => {
+                self.state = RecordingState::Recording;
+                Ok(())
+            },
+            _ => Err("Can only resume from Paused state"),
+        }
+    }
+
+    fn stop_recording(&mut self) -> Result<(), &'static str> {
+        match self.state {
+            RecordingState::Recording | RecordingState::Paused => {
+                self.state = RecordingState::Idle;
+                Ok(())
+            },
+            _ => Err("Can only stop from Recording or Paused state"),
+        }
+    }
+}
+
+// Builder for AutoRecordState
+struct AutoRecordStateBuilder {
+    sentences: Option<Vec<Sentence>>,
+    project_directory: Option<String>,
+    silence_threshold: Option<f32>,
+    silence_duration: Option<Duration>,
+    silence_padding: Option<Duration>,
+    audio_config: Option<AudioConfig>,
+}
+
+impl AutoRecordStateBuilder {
+    fn new() -> Self {
+        Self {
+            sentences: None,
+            project_directory: None,
+            silence_threshold: None,
+            silence_duration: None,
+            silence_padding: None,
+            audio_config: None,
+        }
+    }
+
+    fn sentences(mut self, sentences: Vec<Sentence>) -> Self {
+        self.sentences = Some(sentences);
+        self
+    }
+
+    fn project_directory(mut self, project_directory: String) -> Self {
+        self.project_directory = Some(project_directory);
+        self
+    }
+
+    fn silence_threshold(mut self, silence_threshold: f32) -> Self {
+        self.silence_threshold = Some(silence_threshold);
+        self
+    }
+
+    fn silence_duration(mut self, silence_duration_ms: u64) -> Self {
+        self.silence_duration = Some(Duration::from_millis(silence_duration_ms));
+        self
+    }
+
+    fn silence_padding(mut self, silence_padding_ms: u64) -> Self {
+        self.silence_padding = Some(Duration::from_millis(silence_padding_ms));
+        self
+    }
+
+    fn audio_config(mut self, audio_config: AudioConfig) -> Self {
+        self.audio_config = Some(audio_config);
+        self
+    }
+
+    fn build(self) -> Result<AutoRecordState, String> {
+        Ok(AutoRecordState {
+            sentences: self.sentences.ok_or("Sentences not set")?,
+            project_directory: self.project_directory.ok_or("Project directory not set")?,
+            silence_threshold: self.silence_threshold.ok_or("Silence threshold not set")?,
+            silence_duration: self.silence_duration.ok_or("Silence duration not set")?,
+            silence_padding: self.silence_padding.ok_or("Silence padding not set")?,
+            current_sentence_index: 0,
+            audio_config: self.audio_config.ok_or("Audio config not set")?,
+            state: RecordingState::Idle,
+            is_speaking: Arc::new(Mutex::new(false)),
+            last_active_time: Arc::new(Mutex::new(Instant::now())),
+        })
+    }
+}
+
 // Shared state for the recorder.
 pub struct Recorder {
+    auto_record_state: Option<Arc<Mutex<AutoRecordState>>>,
     writer: Option<Arc<Mutex<WavWriter<BufWriter<File>>>>>,
-    is_auto_recording: bool,
-    current_sentence_index: usize,
-    is_paused: Arc<AtomicBool>,
 }
 
 impl Recorder {
     pub fn new() -> Self {
         Self {
+            auto_record_state: None,
             writer: None,
-            is_auto_recording: false,
-            current_sentence_index: 0,
-            is_paused: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -134,14 +279,6 @@ impl Recorder {
         }
     }
 
-    pub fn pause_auto_record(&mut self) {
-        self.is_paused.store(true, Ordering::SeqCst);
-    }
-
-    pub fn resume_auto_record(&mut self) {
-        self.is_paused.store(false, Ordering::SeqCst);
-    }
-
     /// Starts the auto-recording process with sentence detection and silence handling.
     pub fn start_auto_record(
         &mut self,
@@ -151,130 +288,121 @@ impl Recorder {
         silence_duration_ms: u64,
         silence_padding_ms: u64,
         window: tauri::Window,
-        recorder_state: Arc<Mutex<Recorder>>,
     ) -> Result<(), String> {
-        println!("Starting auto-recording with {} sentences", sentences.len());
-    
-        self.is_auto_recording = true;
-        self.is_paused.store(false, Ordering::SeqCst);
-    
-        // Clone variables to move into the closure
-        let recorder_state_clone = Arc::clone(&recorder_state);
-        let project_directory_clone = project_directory.clone();
-        let is_paused = Arc::clone(&self.is_paused);
-    
+        let audio_config = self.create_audio_config()?;
+
+        let auto_record_state = AutoRecordStateBuilder::new()
+            .sentences(sentences)
+            .project_directory(project_directory)
+            .silence_threshold(silence_threshold)
+            .silence_duration(silence_duration_ms)
+            .silence_padding(silence_padding_ms)
+            .audio_config(audio_config)
+            .build()?;
+
+        let state_arc = Arc::new(Mutex::new(auto_record_state));
+
+        self.auto_record_state = Some(Arc::clone(&state_arc));
+
+        {
+            let mut state = state_arc.lock().unwrap();
+            state.start_recording().map_err(|e| e.to_string())?;
+        }
+
+        self.run_auto_record(state_arc, window)
+    }
+
+    pub fn stop_auto_record(&mut self) -> Result<(), String> {
+        if let Some(state_arc) = self.auto_record_state.take() {
+            let mut state = state_arc.lock().unwrap();
+            state.stop_recording().map_err(|e| e.to_string())?;
+            Ok(())
+        } else {
+            Err("No auto-recording in progress".into())
+        }
+    }
+
+    pub fn pause_auto_record(&mut self) -> Result<(), String> {
+        if let Some(state_arc) = &self.auto_record_state {
+            let mut state = state_arc.lock().unwrap();
+            state.pause_recording().map_err(|e| e.to_string())
+        } else {
+            Err("No auto-recording in progress".into())
+        }
+    }
+
+    pub fn resume_auto_record(&mut self) -> Result<(), String> {
+        if let Some(state_arc) = &self.auto_record_state {
+            let mut state = state_arc.lock().unwrap();
+            state.resume_recording().map_err(|e| e.to_string())
+        } else {
+            Err("No auto-recording in progress".into())
+        }
+    }
+
+    fn create_audio_config(&self) -> Result<AudioConfig, String> {
+        let host = cpal::default_host();
+        let device = host.default_input_device()
+            .ok_or("No input device available")?;
+
+        let config = find_supported_config(&device)
+            .ok_or("No supported audio configuration found")?;
+
+        Ok(AudioConfig {
+            device: DeviceWrapper(device),
+            config: config.clone(),
+            sample_rate: config.sample_rate().0 as usize,
+        })
+    }
+
+    fn run_auto_record(&mut self, state_arc: Arc<Mutex<AutoRecordState>>, window: tauri::Window) -> Result<(), String> {
+        let thread_state_arc = Arc::clone(&state_arc);
+
         std::thread::spawn(move || {
-            let host = cpal::default_host();
-            let device = match host.default_input_device() {
-                Some(device) => device,
-                None => {
-                    eprintln!("Failed to get default input device");
-                    return;
+            loop {
+                let should_continue = {
+                    let state = thread_state_arc.lock().unwrap();
+                    state.state != RecordingState::Idle
+                };
+    
+                if !should_continue {
+                    break;
                 }
-            };
-    
-            // Find a supported configuration with specific sample rates.
-            let config = match find_supported_config(&device) {
-                Some(config) => config,
-                None => {
-                    eprintln!("No supported sample rate found");
-                    return;
-                }
-            };
-    
-            // Start index from the current sentence index
-            let mut index = {
-                let recorder = recorder_state.lock().unwrap();
-                recorder.current_sentence_index
-            };
-    
-            while index < sentences.len() {
-                let sentence = &sentences[index];
-                println!("Processing sentence {}/{}: {}", index + 1, sentences.len(), sentence.text);
-    
-                // Update the recording state.
-                {
-                    let mut recorder = recorder_state.lock().unwrap();
-                    if !recorder.is_auto_recording {
-                        break;
+
+                let sentence_option = {
+                    let state = thread_state_arc.lock().unwrap();
+                    if state.current_sentence_index >= state.sentences.len() {
+                        None
+                    } else {
+                        Some(state.sentences[state.current_sentence_index].clone())
                     }
-                    recorder.current_sentence_index = index;
-                }
-    
-                // Notify the frontend about the current sentence.
-                window
-                    .emit("auto-record-start-sentence", sentence.id)
-                    .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
-    
-                // Record the sentence with silence detection.
-                match record_sentence(
-                    &device,
-                    &config,
-                    &sentence.text,
-                    &project_directory_clone,
-                    silence_threshold,
-                    silence_duration_ms,
-                    silence_padding_ms,
-                    &is_paused,
-                ) {
-                    Ok(()) => {
-                        println!("Finished processing sentence {}/{}", index + 1, sentences.len());
-    
-                        // Notify the frontend after finishing the sentence.
-                        window
-                            .emit("auto-record-finish-sentence", sentence.id)
-                            .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
-    
-                        // Move to the next sentence
-                        index += 1;
-                    }
-                    Err(RecorderError::RecordingPaused) => {
-                        println!("Recording paused during sentence {}. Waiting to resume...", index + 1);
-    
-                        // Wait until recording is resumed or auto-recording is stopped
-                        loop {
-                            if !recorder_state.lock().unwrap().is_auto_recording {
-                                println!("Auto-recording stopped");
+                };
+
+                if let Some(sentence) = sentence_option {
+                    window.emit("auto-record-start-sentence", sentence.id)
+                        .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
+
+                    match record_sentence(&thread_state_arc) {
+                        Ok(()) => handle_successful_recording(&thread_state_arc, &window),
+                        Err(RecorderError::RecordingPaused) => {
+                            if !handle_paused_recording(&thread_state_arc) {
                                 break;
                             }
-                            if !is_paused.load(Ordering::SeqCst) {
-                                println!("Recording resumed");
-                                break;
-                            }
-                            std::thread::sleep(Duration::from_millis(100));
-                        }
-    
-                        // Check again if auto-recording was stopped
-                        if !recorder_state.lock().unwrap().is_auto_recording {
+                        },
+                        Err(e) => {
+                            eprintln!("Error recording sentence: {}", e);
                             break;
                         }
-    
-                        // Upon resuming, retry recording the current sentence
-                        continue;
                     }
-                    Err(e) => {
-                        eprintln!("Error recording sentence {}: {}", index + 1, e);
-                        break;
-                    }
+                } else {
+                    break;
                 }
             }
-    
-            // Notify the frontend that auto-recording is complete.
-            window
-                .emit("auto-record-complete", true)
-                .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
-    
-            // Set the is_auto_recording flag to false after completion.
-            let mut recorder = recorder_state_clone.lock().unwrap();
-            recorder.is_auto_recording = false;
-        });
-    
-        Ok(())
-    }    
 
-    /// Stops the auto-recording process.
-    pub fn stop_auto_record(&mut self) {
-        self.is_auto_recording = false;
+            finalize_recording(&thread_state_arc, &window);
+        });
+
+        Ok(())
     }
 }
 
@@ -314,75 +442,69 @@ fn find_supported_config(device: &cpal::Device) -> Option<SupportedStreamConfig>
         .next()
 }
 
-fn record_sentence(
-    device: &cpal::Device,
-    config: &SupportedStreamConfig,
-    sentence: &str,
-    project_directory: &str,
-    _silence_threshold: f32,
-    silence_duration_ms: u64,
-    silence_padding_ms: u64,
-    is_paused: &Arc<AtomicBool>,
-) -> Result<(), RecorderError> {
-    println!("Starting to record sentence: {}", sentence);
-
-    let stream_config = config.config();
-    let sample_rate = stream_config.sample_rate.0 as usize;
-    let channels = stream_config.channels as usize;
-    let silence_duration = Duration::from_millis(silence_duration_ms);
-    let silence_padding = Duration::from_millis(silence_padding_ms);
+fn record_sentence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
+    let sentence = {
+        let state = state_arc.lock().unwrap();
+        state.sentences[state.current_sentence_index].clone()
+    };
 
     // Get or create the project directory.
-    let project_dir = get_or_create_project_directory(project_directory)?;
-    
-    // Create the WAV file for the sentence.
-    let path = project_dir.join(format!("{}.wav", sentence.trim().replace(" ", "_")));
+    let project_dir = {
+        let state = state_arc.lock().unwrap();
+        get_or_create_project_directory(&state.project_directory)?
+    };
 
-    let spec = WavSpec {
-        channels: channels as u16,
-        sample_rate: sample_rate as u32,
-        bits_per_sample: 16,
-        sample_format: HoundSampleFormat::Int,
+    // Create the WAV file for the sentence.
+    let path = project_dir.join(format!("{}.wav", sentence.text.trim().replace(" ", "_")));
+
+    let spec = {
+        let state = state_arc.lock().unwrap();
+        WavSpec {
+            channels: state.audio_config.config.channels() as u16,
+            sample_rate: state.audio_config.sample_rate as u32,
+            bits_per_sample: 16,
+            sample_format: HoundSampleFormat::Int,
+        }
     };
     let writer = WavWriter::create(&path, spec)?;
     let writer = Arc::new(Mutex::new(writer));
 
     // Initialize buffers and state variables for the recording.
     let active_buffer = Arc::new(Mutex::new(Vec::new()));
-    let is_speaking = Arc::new(Mutex::new(false));
-    let last_active_time = Arc::new(Mutex::new(Instant::now()));
     let (voice_tx, voice_rx) = bounded(1);
 
     // Build the input stream based on the sample format.
-    let stream = build_audio_stream(
-        device,
-        config,
-        silence_duration,
-        silence_padding,
-        sample_rate,
-        writer.clone(),
-        active_buffer.clone(),
-        is_speaking.clone(),
-        last_active_time.clone(),
-        voice_tx,
-        Arc::clone(is_paused),
-    )?;
+    let stream = build_audio_stream(state_arc, writer.clone(), active_buffer.clone(), voice_tx)?;
 
     stream.play()?;
-    println!("Audio stream started for sentence: {}", sentence);
+    println!("Audio stream started for sentence: {}", sentence.text);
 
     println!("Waiting for voice to be detected...");
     loop {
-        if is_paused.load(Ordering::SeqCst) {
-            println!("Recording paused, aborting");
-            // Clean up
-            drop(stream);
-            {
-                let mut writer = writer.lock().unwrap();
-                writer.flush()?; // Finalize the WAV file.
+        {
+            let state = state_arc.lock().unwrap();
+            if state.state == RecordingState::Paused {
+                println!("Recording paused, aborting");
+                // Clean up
+                drop(stream);
+                {
+                    let mut writer = writer.lock().unwrap();
+                    writer.flush()?; // Finalize the WAV file.
+                }
+                std::fs::remove_file(&path)?;
+                return Err(RecorderError::RecordingPaused);
             }
-            std::fs::remove_file(&path)?;
-            return Err(RecorderError::RecordingPaused);
+            if state.state == RecordingState::Idle {
+                println!("Recording stopped, aborting");
+                // Clean up
+                drop(stream);
+                {
+                    let mut writer = writer.lock().unwrap();
+                    writer.flush()?; // Finalize the WAV file.
+                }
+                std::fs::remove_file(&path)?;
+                return Err(RecorderError::RecordingStopped);
+            }
         }
 
         match voice_rx.try_recv() {
@@ -399,12 +521,11 @@ fn record_sentence(
         }
     }
 
-    // Modify `wait_for_silence` call to handle pauses
-    let silence_duration = Duration::from_millis(silence_duration_ms);
-    let wait_result = wait_for_silence(silence_duration, &last_active_time, &is_paused);
+    // Wait for silence
+    let wait_result = wait_for_silence(state_arc);
     match wait_result {
         Ok(()) => {
-            println!("Silence detected, finishing recording for sentence: {}", sentence);
+            println!("Silence detected, finishing recording for sentence: {}", sentence.text);
             // Continue normal processing
         }
         Err(RecorderError::RecordingPaused) => {
@@ -435,30 +556,25 @@ fn record_sentence(
 
 /// Builds the audio input stream with VAD (Voice Activity Detection).
 fn build_audio_stream(
-    device: &cpal::Device,
-    config: &SupportedStreamConfig,
-    silence_duration: Duration,
-    silence_padding: Duration,
-    sample_rate: usize,
+    state_arc: &Arc<Mutex<AutoRecordState>>,
     writer: Arc<Mutex<WavWriter<BufWriter<File>>>>,
     active_buffer: Arc<Mutex<Vec<i16>>>,
-    is_speaking: Arc<Mutex<bool>>,
-    last_active_time: Arc<Mutex<Instant>>,
     voice_tx: Sender<()>,
-    is_paused: Arc<AtomicBool>,
 ) -> Result<Stream, RecorderError> {
-    let frame_length = get_frame_length(sample_rate)?;
+    let sample_format = {
+        let state = state_arc.lock().unwrap();
+        state.audio_config.config.sample_format()
+    };
+
     let err_fn = |err| eprintln!("Stream error: {}", err);
 
-    match config.sample_format() {
+    match sample_format {
         SampleFormat::I16 => {
             let input_data_fn = {
-                let active_buffer = Arc::clone(&active_buffer);
-                let is_speaking = Arc::clone(&is_speaking);
-                let last_active_time = Arc::clone(&last_active_time);
+                let state_arc = Arc::clone(state_arc);
                 let writer = Arc::clone(&writer);
+                let active_buffer = Arc::clone(&active_buffer);
                 let voice_tx = voice_tx.clone();
-                let is_paused = Arc::clone(&is_paused);
 
                 move |data: &[i16], _: &cpal::InputCallbackInfo| {
                     let mut vad = Vad::new_with_rate(SampleRate::Rate16kHz);
@@ -467,30 +583,27 @@ fn build_audio_stream(
                     process_audio_chunk(
                         data,
                         &mut vad,
+                        &state_arc,
                         &active_buffer,
-                        &is_speaking,
-                        &last_active_time,
-                        silence_duration,
-                        silence_padding,
                         &writer,
-                        sample_rate,
-                        frame_length,
                         &voice_tx,
-                        &is_paused,
                     );
                 }
             };
 
-            device
-                .build_input_stream(&config.config(), input_data_fn, err_fn)
-                .map_err(RecorderError::CpalBuildStreamError)
+            let state = state_arc.lock().unwrap();
+            state.audio_config.device.0.build_input_stream(
+                &state.audio_config.config.config(),
+                input_data_fn,
+                err_fn,
+            )
+            .map_err(RecorderError::CpalBuildStreamError)
         }
         SampleFormat::F32 => {
             let input_data_fn = {
-                let active_buffer = Arc::clone(&active_buffer);
-                let is_speaking = Arc::clone(&is_speaking);
-                let last_active_time = Arc::clone(&last_active_time);
+                let state_arc = Arc::clone(state_arc);
                 let writer = Arc::clone(&writer);
+                let active_buffer = Arc::clone(&active_buffer);
                 let voice_tx = voice_tx.clone();
 
                 move |data: &[f32], _: &cpal::InputCallbackInfo| {
@@ -505,53 +618,147 @@ fn build_audio_stream(
                     process_audio_chunk(
                         &data_i16,
                         &mut vad,
+                        &state_arc,
                         &active_buffer,
-                        &is_speaking,
-                        &last_active_time,
-                        silence_duration,
-                        silence_padding,
                         &writer,
-                        sample_rate,
-                        frame_length,
                         &voice_tx,
-                        &is_paused,
                     );
                 }
             };
 
-            device
-                .build_input_stream(&config.config(), input_data_fn, err_fn)
-                .map_err(RecorderError::CpalBuildStreamError)
+            let state = state_arc.lock().unwrap();
+            state.audio_config.device.0.build_input_stream(
+                &state.audio_config.config.config(),
+                input_data_fn,
+                err_fn,
+            )
+            .map_err(RecorderError::CpalBuildStreamError)
         }
         _ => Err(RecorderError::Other("Unsupported sample format".into())),
     }
 }
 
+/// Processes an audio chunk using VAD, updating state and writing data when speech is detected.
+fn process_audio_chunk(
+    data: &[i16],
+    vad: &mut Vad,
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+    active_buffer: &Arc<Mutex<Vec<i16>>>,
+    writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
+    voice_tx: &Sender<()>,
+) {
+    let frame_length = {
+        let state = state_arc.lock().unwrap();
+        get_frame_length(state.audio_config.sample_rate).unwrap_or(160)
+    };
 
-/// Waits for silence to be detected for the given duration.
-fn wait_for_silence(
-    silence_duration: Duration,
-    last_active_time: &Arc<Mutex<Instant>>,
-    is_paused: &Arc<AtomicBool>,
-) -> Result<(), RecorderError> {
-    println!("Entering wait_for_silence");
-    loop {
-        if is_paused.load(Ordering::SeqCst) {
-            println!("Recording paused, aborting wait_for_silence");
-            return Err(RecorderError::RecordingPaused);
+    for chunk in data.chunks(frame_length) {
+        if chunk.len() < frame_length {
+            continue;
         }
 
-        let last_active = {
-            let last_active_time = last_active_time.lock().unwrap();
-            *last_active_time
+        let is_voice = vad.is_voice_segment(chunk).unwrap_or(false);
+
+        let elapsed = {
+            let state = state_arc.lock().unwrap();
+            let last_active = state.last_active_time.lock().unwrap();
+            last_active.elapsed()
         };
 
-        let elapsed = last_active.elapsed();
-        println!("Current silence duration: {:?}", elapsed);
+        let speaking = {
+            let state = state_arc.lock().unwrap();
+            let speaking = state.is_speaking.lock().unwrap();
+            *speaking
+        };
 
-        if elapsed >= silence_duration {
-            println!("Silence duration reached: {:?}", elapsed);
-            break;
+        if is_voice {
+            println!("Voice detected, resetting last_active_time");
+            {
+                let state = state_arc.lock().unwrap();
+                *state.last_active_time.lock().unwrap() = Instant::now();
+            }
+            if elapsed >= Duration::from_millis(200) {
+                {
+                    let state = state_arc.lock().unwrap();
+                    *state.is_speaking.lock().unwrap() = true;
+                }
+                let _ = voice_tx.try_send(());
+            }
+
+            let mut buffer = active_buffer.lock().unwrap();
+            buffer.extend_from_slice(chunk);
+        } else if speaking {
+            let silence_duration = {
+                let state = state_arc.lock().unwrap();
+                state.silence_duration
+            };
+
+            if elapsed >= silence_duration {
+                println!("Silence duration reached after {:?}", elapsed);
+                {
+                    let state = state_arc.lock().unwrap();
+                    *state.is_speaking.lock().unwrap() = false;
+                }
+
+                let silence_padding = {
+                    let state = state_arc.lock().unwrap();
+                    state.silence_padding
+                };
+                let sample_rate = {
+                    let state = state_arc.lock().unwrap();
+                    state.audio_config.sample_rate
+                };
+
+                let padding_samples = (silence_padding.as_secs_f32() * sample_rate as f32) as usize;
+                let mut buffer = active_buffer.lock().unwrap();
+                let end_index = buffer.len().saturating_sub(padding_samples);
+                let trimmed_audio = &buffer[..end_index];
+
+                let mut writer = writer.lock().unwrap();
+                for &sample in trimmed_audio {
+                    writer.write_sample(sample).unwrap_or_else(|e| {
+                        eprintln!("Failed to write sample: {}", e);
+                    });
+                }
+
+                buffer.clear();
+                return;
+            } else {
+                println!("In silence, but duration not yet reached. Elapsed: {:?}", elapsed);
+                let mut buffer = active_buffer.lock().unwrap();
+                buffer.extend_from_slice(chunk);
+            }
+        }
+    }
+}
+
+/// Waits for silence to be detected for the given duration.
+fn wait_for_silence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
+    println!("Entering wait_for_silence");
+    loop {
+        {
+            let state = state_arc.lock().unwrap();
+            if state.state == RecordingState::Paused {
+                println!("Recording paused, aborting wait_for_silence");
+                return Err(RecorderError::RecordingPaused);
+            }
+            if state.state == RecordingState::Idle {
+                println!("Recording stopped, aborting wait_for_silence");
+                return Err(RecorderError::RecordingStopped);
+            }
+
+            let last_active = {
+                let last_active_time = state.last_active_time.lock().unwrap();
+                *last_active_time
+            };
+
+            let elapsed = last_active.elapsed();
+            println!("Current silence duration: {:?}", elapsed);
+
+            if elapsed >= state.silence_duration {
+                println!("Silence duration reached: {:?}", elapsed);
+                break;
+            }
         }
 
         std::thread::sleep(Duration::from_millis(100));
@@ -587,80 +794,51 @@ fn get_or_create_project_directory(
     Ok(project_dir)
 }
 
-/// Processes an audio chunk using VAD, updating state and writing data when speech is detected.
-fn process_audio_chunk(
-    data: &[i16],
-    vad: &mut Vad,
-    active_buffer: &Arc<Mutex<Vec<i16>>>,
-    is_speaking: &Arc<Mutex<bool>>,
-    last_active_time: &Arc<Mutex<Instant>>,
-    silence_duration: Duration,
-    silence_padding: Duration,
-    writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
-    sample_rate: usize,
-    frame_length: usize,
-    voice_tx: &Sender<()>,
-    is_paused: &Arc<AtomicBool>,
-) {
-    if is_paused.load(Ordering::SeqCst) {
-        return; // Skip processing if paused
-    }
+fn handle_successful_recording(state_arc: &Arc<Mutex<AutoRecordState>>, window: &tauri::Window) {
+    let mut state = state_arc.lock().unwrap();
+    let current_index = state.current_sentence_index;
+    let total_sentences = state.sentences.len();
+    let sentence_id = state.sentences[current_index].id;
 
-    for chunk in data.chunks(frame_length) {
-        if chunk.len() < frame_length {
-            continue;
-        }
+    println!("Finished processing sentence {}/{}", current_index + 1, total_sentences);
 
-        let is_voice = vad.is_voice_segment(chunk).unwrap_or(false);
+    window
+        .emit("auto-record-finish-sentence", sentence_id)
+        .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
 
-        let elapsed = {
-            let last_active = last_active_time.lock().unwrap();
-            last_active.elapsed()
-        };
+    state.current_sentence_index += 1;
+}
 
-        println!("Current elapsed time since last activity: {:?}", elapsed);
+fn handle_paused_recording(state_arc: &Arc<Mutex<AutoRecordState>>) -> bool {
+    let mut state = state_arc.lock().unwrap();
+    println!("Recording paused during sentence {}. Waiting to resume...", state.current_sentence_index + 1);
 
-        let speaking = {
-            let speaking = is_speaking.lock().unwrap();
-            *speaking
-        };
-
-        if is_voice {
-            println!("Voice detected, resetting last_active_time");
-            *last_active_time.lock().unwrap() = Instant::now();
-            if elapsed >= Duration::from_millis(200) {
-                *is_speaking.lock().unwrap() = true;
-                let _ = voice_tx.try_send(());
+    loop {
+        match state.state {
+            RecordingState::Idle => {
+                println!("Auto-recording stopped");
+                return false;
             }
-
-            let mut buffer = active_buffer.lock().unwrap();
-            buffer.extend_from_slice(chunk);
-        } else if speaking {
-            if elapsed >= silence_duration {
-                println!("Silence duration reached after {:?}", elapsed);
-                *is_speaking.lock().unwrap() = false;
-
-                let padding_samples = (silence_padding.as_secs_f32() * sample_rate as f32) as usize;
-                let mut buffer = active_buffer.lock().unwrap();
-                let end_index = buffer.len().saturating_sub(padding_samples);
-                let trimmed_audio = &buffer[..end_index];
-
-                let mut writer = writer.lock().unwrap();
-                for &sample in trimmed_audio {
-                    writer.write_sample(sample).unwrap_or_else(|e| {
-                        eprintln!("Failed to write sample: {}", e);
-                    });
-                }
-
-                buffer.clear();
-                return;
-            } else {
-                println!("In silence, but duration not yet reached. Elapsed: {:?}", elapsed);
-                let mut buffer = active_buffer.lock().unwrap();
-                buffer.extend_from_slice(chunk);
+            RecordingState::Paused => {
+                drop(state);
+                std::thread::sleep(Duration::from_millis(100));
+                state = state_arc.lock().unwrap();
+            }
+            RecordingState::Recording => {
+                println!("Recording resumed");
+                return true;
             }
         }
     }
+}
+
+fn finalize_recording(state_arc: &Arc<Mutex<AutoRecordState>>, window: &tauri::Window) {
+    window
+        .emit("auto-record-complete", true)
+        .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
+
+    let mut state = state_arc.lock().unwrap();
+    state.state = RecordingState::Idle;
 }
 
 thread_local! {
@@ -707,7 +885,6 @@ pub fn start_auto_record(
             silence_duration,
             silence_padding,
             window.clone(),
-            Arc::clone(&recorder_state),
         )
         .map_err(|e| e.to_string())?;
     }
@@ -717,22 +894,24 @@ pub fn start_auto_record(
 
 /// Stops the auto-recording process.
 #[tauri::command]
-pub fn stop_auto_record(state: State<Arc<Mutex<Recorder>>>) {
+pub fn stop_auto_record(state: State<Arc<Mutex<Recorder>>>) -> Result<(), String> {
     let recorder_state = Arc::clone(state.inner());
     let mut recorder = recorder_state.lock().unwrap();
-    recorder.stop_auto_record();
+    recorder.stop_auto_record()
 }
 
+/// Pauses the auto-recording process.
 #[tauri::command]
-pub fn pause_auto_record(state: State<Arc<Mutex<Recorder>>>) {
+pub fn pause_auto_record(state: State<Arc<Mutex<Recorder>>>) -> Result<(), String> {
     let recorder_state = Arc::clone(state.inner());
     let mut recorder = recorder_state.lock().unwrap();
-    recorder.pause_auto_record();
+    recorder.pause_auto_record()
 }
 
+/// Resumes the auto-recording process.
 #[tauri::command]
-pub fn resume_auto_record(state: State<Arc<Mutex<Recorder>>>) {
+pub fn resume_auto_record(state: State<Arc<Mutex<Recorder>>>) -> Result<(), String> {
     let recorder_state = Arc::clone(state.inner());
     let mut recorder = recorder_state.lock().unwrap();
-    recorder.resume_auto_record();
+    recorder.resume_auto_record()
 }

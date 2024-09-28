@@ -9,6 +9,12 @@ pub struct Sentence {
     pub audio_file_path: Option<String>,
 }
 
+impl fmt::Display for Sentence {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Sentence {{ id: {}, text: {} }}", self.id, self.text)
+    }
+}
+
 #[derive(Debug)]
 pub enum RecorderError {
     RecordingPaused,
