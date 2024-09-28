@@ -423,23 +423,15 @@ fn write_input_data<T>(
 
 /// Helper function to find a supported audio configuration.
 fn find_supported_config(device: &cpal::Device) -> Option<SupportedStreamConfig> {
-    let supported_configs = device.supported_input_configs().ok()?;
-    supported_configs
-        .filter_map(|config_range| {
-            let min_rate = config_range.min_sample_rate().0;
-            let max_rate = config_range.max_sample_rate().0;
+    device.supported_input_configs().ok()?.find_map(|config_range| {
+        let min_rate = config_range.min_sample_rate().0;
+        let max_rate = config_range.max_sample_rate().0;
 
-            [8000, 16000, 32000, 48000]
-                .iter()
-                .find_map(|&rate| {
-                    if rate >= min_rate && rate <= max_rate {
-                        Some(config_range.clone().with_sample_rate(cpal::SampleRate(rate)))
-                    } else {
-                        None
-                    }
-                })
-        })
-        .next()
+        [8000, 16000, 32000, 48000]
+            .iter()
+            .find(|&&rate| rate >= min_rate && rate <= max_rate)
+            .map(|&rate| config_range.with_sample_rate(cpal::SampleRate(rate)))
+    })
 }
 
 fn record_sentence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
@@ -735,33 +727,27 @@ fn process_audio_chunk(
 /// Waits for silence to be detected for the given duration.
 fn wait_for_silence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
     println!("Entering wait_for_silence");
-    loop {
-        {
-            let state = state_arc.lock().unwrap();
-            if state.state == RecordingState::Paused {
-                println!("Recording paused, aborting wait_for_silence");
-                return Err(RecorderError::RecordingPaused);
-            }
-            if state.state == RecordingState::Idle {
-                println!("Recording stopped, aborting wait_for_silence");
-                return Err(RecorderError::RecordingStopped);
-            }
 
-            let last_active = {
-                let last_active_time = state.last_active_time.lock().unwrap();
-                *last_active_time
-            };
-
-            let elapsed = last_active.elapsed();
-            println!("Current silence duration: {:?}", elapsed);
-
-            if elapsed >= state.silence_duration {
-                println!("Silence duration reached: {:?}", elapsed);
-                break;
-            }
-        }
-
+    while {
+        let state = state_arc.lock().unwrap();
+        let last_active = *state.last_active_time.lock().unwrap();
+        let elapsed = last_active.elapsed();
+        
+        println!("Current silence duration: {:?}", elapsed);
+        
+        state.state == RecordingState::Recording && elapsed < state.silence_duration
+    } {
         std::thread::sleep(Duration::from_millis(100));
+        
+        let state = state_arc.lock().unwrap();
+        if state.state == RecordingState::Paused {
+            println!("Recording paused, aborting wait_for_silence");
+            return Err(RecorderError::RecordingPaused);
+        }
+        if state.state == RecordingState::Idle {
+            println!("Recording stopped, aborting wait_for_silence");
+            return Err(RecorderError::RecordingStopped);
+        }
     }
 
     println!("Exiting wait_for_silence");
@@ -783,12 +769,10 @@ fn get_frame_length(sample_rate: usize) -> Result<usize, RecorderError> {
 fn get_or_create_project_directory(
     project_directory: &str,
 ) -> Result<std::path::PathBuf, RecorderError> {
-    let project_dir = match tauri::api::path::home_dir() {
-        Some(home) => home.join(project_directory),
-        None => std::path::PathBuf::from(project_directory),
-    };
+    let project_dir = tauri::api::path::home_dir()
+        .map(|home| home.join(project_directory))
+        .unwrap_or_else(|| std::path::PathBuf::from(project_directory));
 
-    // Ensure the project directory exists.
     std::fs::create_dir_all(&project_dir)?;
 
     Ok(project_dir)
@@ -810,26 +794,23 @@ fn handle_successful_recording(state_arc: &Arc<Mutex<AutoRecordState>>, window: 
 }
 
 fn handle_paused_recording(state_arc: &Arc<Mutex<AutoRecordState>>) -> bool {
-    let mut state = state_arc.lock().unwrap();
-    println!("Recording paused during sentence {}. Waiting to resume...", state.current_sentence_index + 1);
+    println!("Recording paused during sentence {}. Waiting to resume...", {
+        let state = state_arc.lock().unwrap();
+        state.current_sentence_index + 1
+    });
 
-    loop {
+    while {
+        let state = state_arc.lock().unwrap();
         match state.state {
-            RecordingState::Idle => {
-                println!("Auto-recording stopped");
-                return false;
-            }
-            RecordingState::Paused => {
-                drop(state);
-                std::thread::sleep(Duration::from_millis(100));
-                state = state_arc.lock().unwrap();
-            }
-            RecordingState::Recording => {
-                println!("Recording resumed");
-                return true;
-            }
+            RecordingState::Idle => return false,
+            RecordingState::Paused => true,
+            RecordingState::Recording => return true,
         }
+    } {
+        std::thread::sleep(Duration::from_millis(100));
     }
+
+    false // This line is unreachable, but Rust requires it for completeness
 }
 
 fn finalize_recording(state_arc: &Arc<Mutex<AutoRecordState>>, window: &tauri::Window) {
