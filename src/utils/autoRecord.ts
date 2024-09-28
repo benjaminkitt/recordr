@@ -22,3 +22,11 @@ export async function startAutoRecord(
 export async function stopAutoRecord() {
   await invoke('stop_auto_record');
 }
+
+export async function pauseAutoRecord() {
+  await invoke('pause_auto_record');
+}
+
+export async function resumeAutoRecord() {
+  await invoke('resume_auto_record');
+}

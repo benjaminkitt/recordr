@@ -12,7 +12,12 @@
     AutoRecordStartSentenceEvent,
     AutoRecordFinishSentenceEvent,
   } from "../types";
-  import { startAutoRecord as autoRecord } from "../utils/autoRecord";
+  import { 
+    startAutoRecord as autoRecord,
+    stopAutoRecord,
+    pauseAutoRecord,
+    resumeAutoRecord,  
+  } from "../utils/autoRecord";
   import { onMount, afterUpdate } from "svelte";
   import { get } from "svelte/store";
   import { listen } from "@tauri-apps/api/event";
@@ -27,6 +32,7 @@
   let silencePadding = 300;
 
   let isAutoRecording = false;
+  let isPaused = false;
   let currentSentenceIndex = -1;
 
   let sentenceListContainer: HTMLDivElement;
@@ -54,6 +60,27 @@
     } catch (error) {
       console.error("Error starting auto-record:", error);
       isAutoRecording = false;
+    }
+  }
+
+  async function toggleAutoRecord() {
+    if (!isAutoRecording) {
+      await startAutoRecord();
+      isAutoRecording = true;
+    } else {
+      await stopAutoRecord();
+      isAutoRecording = false;
+      isPaused = false;
+    }
+  }
+
+  async function togglePauseResume() {
+    if (isPaused) {
+      await resumeAutoRecord();
+      isPaused = false;
+    } else {
+      await pauseAutoRecord();
+      isPaused = true;
     }
   }
 
@@ -284,15 +311,23 @@
     {/if}
     <button
       class="btn variant-filled"
-      on:click={startAutoRecord}
-      disabled={!$isProjectLoaded || !$sentences.length || isAutoRecording}
+      on:click={toggleAutoRecord}
+      disabled={!$isProjectLoaded || !$sentences.length}
     >
-      {isAutoRecording ? "Auto-Recording..." : "Start Auto-Record"}
+      {isAutoRecording ? "Stop Auto-Record" : "Start Auto-Record"}
     </button>
+    {#if isAutoRecording}
+      <button
+        class="btn variant-filled"
+        on:click={togglePauseResume}
+      >
+        {isPaused ? "Resume Auto-Record" : "Pause Auto-Record"}
+      </button>
+    {/if}
   </div>
   {#if isAutoRecording}
     <p class="mt-2">
-      Recording sentence {currentSentenceIndex + 1} of {$sentences.length}
+      {isPaused ? "Auto-recording paused" : `Recording sentence ${currentSentenceIndex + 1} of ${$sentences.length}`}
     </p>
   {/if}
 </div>

@@ -5,17 +5,19 @@ use std::cell::RefCell;
 use std::fs::File;
 use std::io::BufWriter;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 use tauri::State;
 use webrtc_vad::{SampleRate, Vad, VadMode};
-use crate::models::Sentence;
+use crossbeam_channel::{bounded, Sender};
+use crate::models::{Sentence, RecorderError};
 
 // Shared state for the recorder.
 pub struct Recorder {
     writer: Option<Arc<Mutex<WavWriter<BufWriter<File>>>>>,
     is_auto_recording: bool,
     current_sentence_index: usize,
-    is_paused: bool,
+    is_paused: Arc<AtomicBool>,
 }
 
 impl Recorder {
@@ -24,7 +26,7 @@ impl Recorder {
             writer: None,
             is_auto_recording: false,
             current_sentence_index: 0,
-            is_paused: false,
+            is_paused: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -132,6 +134,14 @@ impl Recorder {
         }
     }
 
+    pub fn pause_auto_record(&mut self) {
+        self.is_paused.store(true, Ordering::SeqCst);
+    }
+
+    pub fn resume_auto_record(&mut self) {
+        self.is_paused.store(false, Ordering::SeqCst);
+    }
+
     /// Starts the auto-recording process with sentence detection and silence handling.
     pub fn start_auto_record(
         &mut self,
@@ -141,19 +151,18 @@ impl Recorder {
         silence_duration_ms: u64,
         silence_padding_ms: u64,
         window: tauri::Window,
-        recorder_state: Arc<Mutex<Recorder>>, // Pass the shared recorder state
+        recorder_state: Arc<Mutex<Recorder>>,
     ) -> Result<(), String> {
         println!("Starting auto-recording with {} sentences", sentences.len());
-
+    
         self.is_auto_recording = true;
-
+        self.is_paused.store(false, Ordering::SeqCst);
+    
         // Clone variables to move into the closure
         let recorder_state_clone = Arc::clone(&recorder_state);
-        let sentences_clone = sentences.clone();
         let project_directory_clone = project_directory.clone();
-        let window_clone = window.clone();
-
-        // Spawn a new thread for the auto-recording process.
+        let is_paused = Arc::clone(&self.is_paused);
+    
         std::thread::spawn(move || {
             let host = cpal::default_host();
             let device = match host.default_input_device() {
@@ -163,7 +172,7 @@ impl Recorder {
                     return;
                 }
             };
-
+    
             // Find a supported configuration with specific sample rates.
             let config = match find_supported_config(&device) {
                 Some(config) => config,
@@ -172,11 +181,17 @@ impl Recorder {
                     return;
                 }
             };
-
-            // Iterate over each sentence and record.
-            for (index, sentence) in sentences.iter().enumerate() {
+    
+            // Start index from the current sentence index
+            let mut index = {
+                let recorder = recorder_state.lock().unwrap();
+                recorder.current_sentence_index
+            };
+    
+            while index < sentences.len() {
+                let sentence = &sentences[index];
                 println!("Processing sentence {}/{}: {}", index + 1, sentences.len(), sentence.text);
-
+    
                 // Update the recording state.
                 {
                     let mut recorder = recorder_state.lock().unwrap();
@@ -185,14 +200,14 @@ impl Recorder {
                     }
                     recorder.current_sentence_index = index;
                 }
-
+    
                 // Notify the frontend about the current sentence.
                 window
                     .emit("auto-record-start-sentence", sentence.id)
                     .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
-
+    
                 // Record the sentence with silence detection.
-                if let Err(e) = record_sentence(
+                match record_sentence(
                     &device,
                     &config,
                     &sentence.text,
@@ -200,31 +215,62 @@ impl Recorder {
                     silence_threshold,
                     silence_duration_ms,
                     silence_padding_ms,
+                    &is_paused,
                 ) {
-                    eprintln!("Error recording sentence {}: {}", index + 1, e);
-                    break;
+                    Ok(()) => {
+                        println!("Finished processing sentence {}/{}", index + 1, sentences.len());
+    
+                        // Notify the frontend after finishing the sentence.
+                        window
+                            .emit("auto-record-finish-sentence", sentence.id)
+                            .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
+    
+                        // Move to the next sentence
+                        index += 1;
+                    }
+                    Err(RecorderError::RecordingPaused) => {
+                        println!("Recording paused during sentence {}. Waiting to resume...", index + 1);
+    
+                        // Wait until recording is resumed or auto-recording is stopped
+                        loop {
+                            if !recorder_state.lock().unwrap().is_auto_recording {
+                                println!("Auto-recording stopped");
+                                break;
+                            }
+                            if !is_paused.load(Ordering::SeqCst) {
+                                println!("Recording resumed");
+                                break;
+                            }
+                            std::thread::sleep(Duration::from_millis(100));
+                        }
+    
+                        // Check again if auto-recording was stopped
+                        if !recorder_state.lock().unwrap().is_auto_recording {
+                            break;
+                        }
+    
+                        // Upon resuming, retry recording the current sentence
+                        continue;
+                    }
+                    Err(e) => {
+                        eprintln!("Error recording sentence {}: {}", index + 1, e);
+                        break;
+                    }
                 }
-
-                println!("Finished processing sentence {}/{}", index + 1, sentences.len());
-
-                // Notify the frontend after finishing the sentence.
-                window
-                    .emit("auto-record-finish-sentence", sentence.id)
-                    .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
             }
-
+    
             // Notify the frontend that auto-recording is complete.
             window
                 .emit("auto-record-complete", true)
                 .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
-
+    
             // Set the is_auto_recording flag to false after completion.
             let mut recorder = recorder_state_clone.lock().unwrap();
             recorder.is_auto_recording = false;
         });
-
+    
         Ok(())
-    }
+    }    
 
     /// Stops the auto-recording process.
     pub fn stop_auto_record(&mut self) {
@@ -268,10 +314,6 @@ fn find_supported_config(device: &cpal::Device) -> Option<SupportedStreamConfig>
         .next()
 }
 
-/// Handles the recording of a single sentence, saving it to a WAV file.
-use std::sync::atomic::{AtomicBool, Ordering};
-use crossbeam_channel::{bounded, Sender};
-
 fn record_sentence(
     device: &cpal::Device,
     config: &SupportedStreamConfig,
@@ -280,7 +322,8 @@ fn record_sentence(
     _silence_threshold: f32,
     silence_duration_ms: u64,
     silence_padding_ms: u64,
-) -> Result<(), Box<dyn std::error::Error>> {
+    is_paused: &Arc<AtomicBool>,
+) -> Result<(), RecorderError> {
     println!("Starting to record sentence: {}", sentence);
 
     let stream_config = config.config();
@@ -291,7 +334,7 @@ fn record_sentence(
 
     // Get or create the project directory.
     let project_dir = get_or_create_project_directory(project_directory)?;
-
+    
     // Create the WAV file for the sentence.
     let path = project_dir.join(format!("{}.wav", sentence.trim().replace(" ", "_")));
 
@@ -301,7 +344,7 @@ fn record_sentence(
         bits_per_sample: 16,
         sample_format: HoundSampleFormat::Int,
     };
-    let writer = WavWriter::create(path, spec)?;
+    let writer = WavWriter::create(&path, spec)?;
     let writer = Arc::new(Mutex::new(writer));
 
     // Initialize buffers and state variables for the recording.
@@ -322,16 +365,63 @@ fn record_sentence(
         is_speaking.clone(),
         last_active_time.clone(),
         voice_tx,
+        Arc::clone(is_paused),
     )?;
 
     stream.play()?;
     println!("Audio stream started for sentence: {}", sentence);
 
     println!("Waiting for voice to be detected...");
-    voice_rx.recv()?;
-    println!("Voice detected, now waiting for silence...");
-    wait_for_silence(silence_duration, &last_active_time)?;
-    println!("Silence detected, finishing recording for sentence: {}", sentence);
+    loop {
+        if is_paused.load(Ordering::SeqCst) {
+            println!("Recording paused, aborting");
+            // Clean up
+            drop(stream);
+            {
+                let mut writer = writer.lock().unwrap();
+                writer.flush()?; // Finalize the WAV file.
+            }
+            std::fs::remove_file(&path)?;
+            return Err(RecorderError::RecordingPaused);
+        }
+
+        match voice_rx.try_recv() {
+            Ok(_) => {
+                println!("Voice detected, now waiting for silence...");
+                break;
+            }
+            Err(crossbeam_channel::TryRecvError::Empty) => {
+                std::thread::sleep(Duration::from_millis(100));
+            }
+            Err(e) => {
+                return Err(RecorderError::Other(e.to_string()));
+            }
+        }
+    }
+
+    // Modify `wait_for_silence` call to handle pauses
+    let silence_duration = Duration::from_millis(silence_duration_ms);
+    let wait_result = wait_for_silence(silence_duration, &last_active_time, &is_paused);
+    match wait_result {
+        Ok(()) => {
+            println!("Silence detected, finishing recording for sentence: {}", sentence);
+            // Continue normal processing
+        }
+        Err(RecorderError::RecordingPaused) => {
+            println!("Wait for silence aborted due to pause");
+            // Clean up resources, delete the partially recorded file, etc.
+            drop(stream);
+            {
+                let mut writer = writer.lock().unwrap();
+                writer.flush()?; // Finalize the WAV file.
+            }
+            std::fs::remove_file(&path)?;
+            return Err(RecorderError::RecordingPaused);
+        }
+        Err(e) => {
+            return Err(e); // Propagate other errors
+        }
+    }
 
     // Stop the stream and finalize the WAV file.
     drop(stream);
@@ -355,7 +445,8 @@ fn build_audio_stream(
     is_speaking: Arc<Mutex<bool>>,
     last_active_time: Arc<Mutex<Instant>>,
     voice_tx: Sender<()>,
-) -> Result<Stream, Box<dyn std::error::Error>> {
+    is_paused: Arc<AtomicBool>,
+) -> Result<Stream, RecorderError> {
     let frame_length = get_frame_length(sample_rate)?;
     let err_fn = |err| eprintln!("Stream error: {}", err);
 
@@ -367,6 +458,7 @@ fn build_audio_stream(
                 let last_active_time = Arc::clone(&last_active_time);
                 let writer = Arc::clone(&writer);
                 let voice_tx = voice_tx.clone();
+                let is_paused = Arc::clone(&is_paused);
 
                 move |data: &[i16], _: &cpal::InputCallbackInfo| {
                     let mut vad = Vad::new_with_rate(SampleRate::Rate16kHz);
@@ -384,11 +476,14 @@ fn build_audio_stream(
                         sample_rate,
                         frame_length,
                         &voice_tx,
+                        &is_paused,
                     );
                 }
             };
 
-            Ok(device.build_input_stream(&config.config(), input_data_fn, err_fn)?)
+            device
+                .build_input_stream(&config.config(), input_data_fn, err_fn)
+                .map_err(RecorderError::CpalBuildStreamError)
         }
         SampleFormat::F32 => {
             let input_data_fn = {
@@ -419,13 +514,16 @@ fn build_audio_stream(
                         sample_rate,
                         frame_length,
                         &voice_tx,
+                        &is_paused,
                     );
                 }
             };
 
-            Ok(device.build_input_stream(&config.config(), input_data_fn, err_fn)?)
+            device
+                .build_input_stream(&config.config(), input_data_fn, err_fn)
+                .map_err(RecorderError::CpalBuildStreamError)
         }
-        _ => Err("Unsupported sample format".into()),
+        _ => Err(RecorderError::Other("Unsupported sample format".into())),
     }
 }
 
@@ -434,9 +532,15 @@ fn build_audio_stream(
 fn wait_for_silence(
     silence_duration: Duration,
     last_active_time: &Arc<Mutex<Instant>>,
-) -> Result<(), Box<dyn std::error::Error>> {
+    is_paused: &Arc<AtomicBool>,
+) -> Result<(), RecorderError> {
     println!("Entering wait_for_silence");
     loop {
+        if is_paused.load(Ordering::SeqCst) {
+            println!("Recording paused, aborting wait_for_silence");
+            return Err(RecorderError::RecordingPaused);
+        }
+
         let last_active = {
             let last_active_time = last_active_time.lock().unwrap();
             *last_active_time
@@ -458,20 +562,20 @@ fn wait_for_silence(
 }
 
 /// Returns the frame length for the given sample rate, used in VAD.
-fn get_frame_length(sample_rate: usize) -> Result<usize, Box<dyn std::error::Error>> {
-    Ok(match sample_rate {
-        8000 => 160,
-        16000 => 320,
-        32000 => 640,
-        48000 => 960,
-        _ => return Err(format!("Unsupported sample rate: {}", sample_rate).into()),
-    })
+fn get_frame_length(sample_rate: usize) -> Result<usize, RecorderError> {
+    match sample_rate {
+        8000 => Ok(160),
+        16000 => Ok(320),
+        32000 => Ok(640),
+        48000 => Ok(960),
+        _ => Err(RecorderError::Other(format!("Unsupported sample rate: {}", sample_rate))),
+    }
 }
 
 /// Creates or gets the project directory based on the provided path.
 fn get_or_create_project_directory(
     project_directory: &str,
-) -> Result<std::path::PathBuf, Box<dyn std::error::Error>> {
+) -> Result<std::path::PathBuf, RecorderError> {
     let project_dir = match tauri::api::path::home_dir() {
         Some(home) => home.join(project_directory),
         None => std::path::PathBuf::from(project_directory),
@@ -496,7 +600,12 @@ fn process_audio_chunk(
     sample_rate: usize,
     frame_length: usize,
     voice_tx: &Sender<()>,
+    is_paused: &Arc<AtomicBool>,
 ) {
+    if is_paused.load(Ordering::SeqCst) {
+        return; // Skip processing if paused
+    }
+
     for chunk in data.chunks(frame_length) {
         if chunk.len() < frame_length {
             continue;
@@ -599,7 +708,8 @@ pub fn start_auto_record(
             silence_padding,
             window.clone(),
             Arc::clone(&recorder_state),
-        )?;
+        )
+        .map_err(|e| e.to_string())?;
     }
 
     Ok(())
@@ -611,4 +721,18 @@ pub fn stop_auto_record(state: State<Arc<Mutex<Recorder>>>) {
     let recorder_state = Arc::clone(state.inner());
     let mut recorder = recorder_state.lock().unwrap();
     recorder.stop_auto_record();
+}
+
+#[tauri::command]
+pub fn pause_auto_record(state: State<Arc<Mutex<Recorder>>>) {
+    let recorder_state = Arc::clone(state.inner());
+    let mut recorder = recorder_state.lock().unwrap();
+    recorder.pause_auto_record();
+}
+
+#[tauri::command]
+pub fn resume_auto_record(state: State<Arc<Mutex<Recorder>>>) {
+    let recorder_state = Arc::clone(state.inner());
+    let mut recorder = recorder_state.lock().unwrap();
+    recorder.resume_auto_record();
 }

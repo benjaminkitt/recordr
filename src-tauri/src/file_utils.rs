@@ -2,7 +2,6 @@ use std::fs;
 use std::path::Path;
 use std::ffi::OsStr;
 use csv::ReaderBuilder;
-use serde::{Deserialize, Serialize};
 use crate::models::Sentence;
 
 #[tauri::command]

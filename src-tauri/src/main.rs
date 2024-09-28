@@ -10,6 +10,8 @@ use audio::{
     stop_recording,
     start_auto_record,
     stop_auto_record,
+    pause_auto_record,
+    resume_auto_record,
     Recorder, // Import the Recorder struct
 };
 
@@ -31,6 +33,8 @@ fn main() {
             stop_recording,
             start_auto_record,
             stop_auto_record,
+            pause_auto_record,
+            resume_auto_record,
             import_sentences,
             create_new_project,
             open_project,
