@@ -5,12 +5,15 @@ use std::cell::RefCell;
 use std::fs::File;
 use std::fmt;
 use std::io::BufWriter;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tauri::State;
 use webrtc_vad::{SampleRate, Vad, VadMode};
-use crossbeam_channel::{bounded, Sender};
+use crossbeam_channel::{bounded, Receiver, Sender};
 use crate::models::{Sentence, RecorderError};
+
+type AudioStream = Result<Stream, RecorderError>;
 
 struct DeviceWrapper(Device);
 
@@ -435,116 +438,74 @@ fn find_supported_config(device: &cpal::Device) -> Option<SupportedStreamConfig>
 }
 
 fn record_sentence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
-    let sentence = {
-        let state = state_arc.lock().unwrap();
-        state.sentences[state.current_sentence_index].clone()
-    };
+    let (sentence, writer, path) = prepare_recording(state_arc)?;
+    let (active_buffer, voice_tx, voice_rx) = initialize_recording_buffers();
 
-    // Get or create the project directory.
-    let project_dir = {
-        let state = state_arc.lock().unwrap();
-        get_or_create_project_directory(&state.project_directory)?
-    };
+    let stream = build_audio_stream(state_arc, writer.clone(), active_buffer.clone(), voice_tx)?;
+    stream.play()?;
 
-    // Create the WAV file for the sentence.
+    wait_for_voice(state_arc, &voice_rx)?;
+    wait_for_silence(state_arc)?;
+
+    complete_recording(stream, writer, &path)
+}
+
+fn prepare_recording(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(Sentence, Arc<Mutex<WavWriter<BufWriter<File>>>>, PathBuf), RecorderError> {
+    let state = state_arc.lock().unwrap();
+    let sentence = state.sentences[state.current_sentence_index].clone();
+    let project_dir = get_or_create_project_directory(&state.project_directory)?;
+    
+    // Create WAV file path
     let path = project_dir.join(format!("{}.wav", sentence.text.trim().replace(" ", "_")));
-
-    let spec = {
-        let state = state_arc.lock().unwrap();
-        WavSpec {
-            channels: state.audio_config.config.channels() as u16,
-            sample_rate: state.audio_config.sample_rate as u32,
-            bits_per_sample: 16,
-            sample_format: HoundSampleFormat::Int,
-        }
+    
+    // Create WAV writer
+    let spec = WavSpec {
+        channels: state.audio_config.config.channels() as u16,
+        sample_rate: state.audio_config.sample_rate as u32,
+        bits_per_sample: 16,
+        sample_format: HoundSampleFormat::Int,
     };
-    let writer = WavWriter::create(&path, spec)?;
-    let writer = Arc::new(Mutex::new(writer));
+    let writer = Arc::new(Mutex::new(WavWriter::create(&path, spec)?));
+    
+    Ok((sentence, writer, path))
+}
 
-    // Initialize buffers and state variables for the recording.
+fn initialize_recording_buffers() -> (Arc<Mutex<Vec<i16>>>, Sender<()>, Receiver<()>) {
     let active_buffer = Arc::new(Mutex::new(Vec::new()));
     let (voice_tx, voice_rx) = bounded(1);
+    (active_buffer, voice_tx, voice_rx)
+}
 
-    // Build the input stream based on the sample format.
-    let stream = build_audio_stream(state_arc, writer.clone(), active_buffer.clone(), voice_tx)?;
-
-    stream.play()?;
-    println!("Audio stream started for sentence: {}", sentence.text);
-
-    println!("Waiting for voice to be detected...");
+fn wait_for_voice(state_arc: &Arc<Mutex<AutoRecordState>>, voice_rx: &Receiver<()>) -> Result<(), RecorderError> {
     loop {
-        {
-            let state = state_arc.lock().unwrap();
-            if state.state == RecordingState::Paused {
-                println!("Recording paused, aborting");
-                // Clean up
-                drop(stream);
-                {
-                    let mut writer = writer.lock().unwrap();
-                    writer.flush()?; // Finalize the WAV file.
-                }
-                std::fs::remove_file(&path)?;
-                return Err(RecorderError::RecordingPaused);
-            }
-            if state.state == RecordingState::Idle {
-                println!("Recording stopped, aborting");
-                // Clean up
-                drop(stream);
-                {
-                    let mut writer = writer.lock().unwrap();
-                    writer.flush()?; // Finalize the WAV file.
-                }
-                std::fs::remove_file(&path)?;
-                return Err(RecorderError::RecordingStopped);
-            }
+        check_recording_state(state_arc)?;
+        if voice_rx.try_recv().is_ok() {
+            break;
         }
-
-        match voice_rx.try_recv() {
-            Ok(_) => {
-                println!("Voice detected, now waiting for silence...");
-                break;
-            }
-            Err(crossbeam_channel::TryRecvError::Empty) => {
-                std::thread::sleep(Duration::from_millis(100));
-            }
-            Err(e) => {
-                return Err(RecorderError::Other(e.to_string()));
-            }
-        }
+        std::thread::sleep(Duration::from_millis(100));
     }
-
-    // Wait for silence
-    let wait_result = wait_for_silence(state_arc);
-    match wait_result {
-        Ok(()) => {
-            println!("Silence detected, finishing recording for sentence: {}", sentence.text);
-            // Continue normal processing
-        }
-        Err(RecorderError::RecordingPaused) => {
-            println!("Wait for silence aborted due to pause");
-            // Clean up resources, delete the partially recorded file, etc.
-            drop(stream);
-            {
-                let mut writer = writer.lock().unwrap();
-                writer.flush()?; // Finalize the WAV file.
-            }
-            std::fs::remove_file(&path)?;
-            return Err(RecorderError::RecordingPaused);
-        }
-        Err(e) => {
-            return Err(e); // Propagate other errors
-        }
-    }
-
-    // Stop the stream and finalize the WAV file.
-    drop(stream);
-    {
-        let mut writer = writer.lock().unwrap();
-        writer.flush()?; // Finalize the WAV file.
-    }
-
     Ok(())
 }
+
+fn check_recording_state(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
+    let state = state_arc.lock().unwrap();
+    match state.state {
+        RecordingState::Paused => Err(RecorderError::RecordingPaused),
+        RecordingState::Idle => Err(RecorderError::RecordingStopped),
+        RecordingState::Recording => Ok(()),
+    }
+}
+
+fn complete_recording(
+    stream: Stream,
+    writer: Arc<Mutex<WavWriter<BufWriter<File>>>>,
+    path: &Path,
+) -> Result<(), RecorderError> {
+    drop(stream);
+    writer.lock().unwrap().flush()?;
+    Ok(())
+}
+
 
 /// Builds the audio input stream with VAD (Voice Activity Detection).
 fn build_audio_stream(
@@ -552,7 +513,7 @@ fn build_audio_stream(
     writer: Arc<Mutex<WavWriter<BufWriter<File>>>>,
     active_buffer: Arc<Mutex<Vec<i16>>>,
     voice_tx: Sender<()>,
-) -> Result<Stream, RecorderError> {
+) -> AudioStream {
     let sample_format = {
         let state = state_arc.lock().unwrap();
         state.audio_config.config.sample_format()
