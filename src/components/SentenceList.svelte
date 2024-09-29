@@ -146,6 +146,9 @@
   let newSentence = "";
 
   function addSentence() {
+    if ($isRecording || isAutoRecording) {
+      return; // Don't allow adding while recording
+    }
     const trimmedSentence = newSentence.trim();
     if (trimmedSentence === "") {
       alert("Please enter a sentence.");
@@ -160,13 +163,16 @@
       newSentence = "";
     }
   }
-
+  
   function removeSentence(index: number) {
+    if ($isRecording || isAutoRecording) {
+      return; // Don't allow removal while recording
+    }
     if (confirm("Are you sure you want to remove this sentence?")) {
       $sentences = $sentences.filter((_, i) => i !== index);
     }
   }
-
+  
   function selectSentence(sentence: Sentence) {
     selectedSentence.set(sentence);
   }
@@ -245,8 +251,11 @@
     />
     <button
       class="btn variant-filled shrink-0 inline-flex justify-center items-center gap-x-2"
-      on:click={addSentence}>Add Sentence</button
+      on:click={addSentence}
+      disabled={$isRecording || isAutoRecording}
     >
+      Add Sentence
+    </button>
   </div>
 
   <div
@@ -281,6 +290,7 @@
                 class="btn variant-filled-error"
                 use:popup={removePopupHover}
                 on:click={() => removeSentence(index)}
+                disabled={$isRecording || isAutoRecording}
               >
                 <MdiRemoveBox />
               </button>
