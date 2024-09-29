@@ -521,49 +521,74 @@ fn build_audio_stream(
 
     let err_fn = |err| eprintln!("Stream error: {}", err);
 
-    let input_data_fn = create_input_data_fn(
-        Arc::clone(state_arc),
-        Arc::clone(&writer),
-        Arc::clone(&active_buffer),
-        voice_tx.clone(),
-        sample_format,
-    );
+    match sample_format {
+        SampleFormat::I16 => {
+            let input_data_fn = {
+                let state_arc = Arc::clone(state_arc);
+                let writer = Arc::clone(&writer);
+                let active_buffer = Arc::clone(&active_buffer);
+                let voice_tx = voice_tx.clone();
 
-    let state = state_arc.lock().unwrap();
-    state.audio_config.device.0.build_input_stream(
-        &state.audio_config.config.config(),
-        input_data_fn,
-        err_fn,
-    )
-    .map_err(RecorderError::CpalBuildStreamError)
-}
+                move |data: &[i16], _: &cpal::InputCallbackInfo| {
+                    let mut vad = Vad::new_with_rate(SampleRate::Rate16kHz);
+                    vad.set_mode(VadMode::VeryAggressive);
 
-fn create_input_data_fn(
-    state_arc: Arc<Mutex<AutoRecordState>>,
-    writer: Arc<Mutex<WavWriter<BufWriter<File>>>>,
-    active_buffer: Arc<Mutex<Vec<i16>>>,
-    voice_tx: Sender<()>,
-    sample_format: SampleFormat,
-) -> Box<dyn FnMut(&[f32], &cpal::InputCallbackInfo) + Send + 'static> {
-    Box::new(move |input_data: &[f32], _: &cpal::InputCallbackInfo| {
-        let processed_data: Vec<i16> = match sample_format {
-            SampleFormat::I16 => input_data.iter().map(|&x| x as i16).collect(),
-            SampleFormat::F32 => input_data.iter().map(|&x| (x * i16::MAX as f32) as i16).collect(),
-            _ => return, // Early return for unsupported formats
-        };
+                    process_audio_chunk(
+                        data,
+                        &mut vad,
+                        &state_arc,
+                        &active_buffer,
+                        &writer,
+                        &voice_tx,
+                    );
+                }
+            };
 
-        let mut vad = Vad::new_with_rate(SampleRate::Rate16kHz);
-        vad.set_mode(VadMode::VeryAggressive);
+            let state = state_arc.lock().unwrap();
+            state.audio_config.device.0.build_input_stream(
+                &state.audio_config.config.config(),
+                input_data_fn,
+                err_fn,
+            )
+            .map_err(RecorderError::CpalBuildStreamError)
+        }
+        SampleFormat::F32 => {
+            let input_data_fn = {
+                let state_arc = Arc::clone(state_arc);
+                let writer = Arc::clone(&writer);
+                let active_buffer = Arc::clone(&active_buffer);
+                let voice_tx = voice_tx.clone();
 
-        process_audio_chunk(
-            &processed_data,
-            &mut vad,
-            &state_arc,
-            &active_buffer,
-            &writer,
-            &voice_tx,
-        );
-    })
+                move |data: &[f32], _: &cpal::InputCallbackInfo| {
+                    let data_i16: Vec<i16> = data
+                        .iter()
+                        .map(|&sample| (sample * i16::MAX as f32) as i16)
+                        .collect();
+
+                    let mut vad = Vad::new_with_rate(SampleRate::Rate16kHz);
+                    vad.set_mode(VadMode::VeryAggressive);
+
+                    process_audio_chunk(
+                        &data_i16,
+                        &mut vad,
+                        &state_arc,
+                        &active_buffer,
+                        &writer,
+                        &voice_tx,
+                    );
+                }
+            };
+
+            let state = state_arc.lock().unwrap();
+            state.audio_config.device.0.build_input_stream(
+                &state.audio_config.config.config(),
+                input_data_fn,
+                err_fn,
+            )
+            .map_err(RecorderError::CpalBuildStreamError)
+        }
+        _ => Err(RecorderError::Other("Unsupported sample format".into())),
+    }
 }
 
 /// Processes an audio chunk using VAD, updating state and writing data when speech is detected.
