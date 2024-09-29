@@ -30,6 +30,11 @@ struct AudioConfig {
     sample_rate: usize,
 }
 
+enum AudioEvent {
+    Voice,
+    Silence,
+}
+
 // Enum for recording state
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum RecordingState {
@@ -444,8 +449,8 @@ fn record_sentence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), Record
     let stream = build_audio_stream(state_arc, writer.clone(), active_buffer.clone(), voice_tx)?;
     stream.play()?;
 
-    wait_for_voice(state_arc, &voice_rx)?;
-    wait_for_silence(state_arc)?;
+    wait_for_audio_event(state_arc, AudioEvent::Voice, &voice_rx)?;
+    wait_for_audio_event(state_arc, AudioEvent::Silence, &voice_rx)?;
 
     complete_recording(stream, writer, &path)
 }
@@ -476,12 +481,27 @@ fn initialize_recording_buffers() -> (Arc<Mutex<Vec<i16>>>, Sender<()>, Receiver
     (active_buffer, voice_tx, voice_rx)
 }
 
-fn wait_for_voice(state_arc: &Arc<Mutex<AutoRecordState>>, voice_rx: &Receiver<()>) -> Result<(), RecorderError> {
+fn wait_for_audio_event(state_arc: &Arc<Mutex<AutoRecordState>>, event: AudioEvent, voice_rx: &Receiver<()>) -> Result<(), RecorderError> {
     loop {
         check_recording_state(state_arc)?;
-        if voice_rx.try_recv().is_ok() {
-            break;
+        
+        match event {
+            AudioEvent::Voice => {
+                if voice_rx.try_recv().is_ok() {
+                    break;
+                }
+            },
+            AudioEvent::Silence => {
+                let state = state_arc.lock().unwrap();
+                let last_active = *state.last_active_time.lock().unwrap();
+                let elapsed = last_active.elapsed();
+                
+                if elapsed >= state.silence_duration {
+                    break;
+                }
+            }
         }
+        
         std::thread::sleep(Duration::from_millis(100));
     }
     Ok(())
@@ -502,10 +522,12 @@ fn complete_recording(
     path: &Path,
 ) -> Result<(), RecorderError> {
     drop(stream);
-    writer.lock().unwrap().flush()?;
+    
+    let mut writer = writer.lock().unwrap();
+    writer.flush().map_err(|e| RecorderError::HoundError(e))?;
+    
     Ok(())
 }
-
 
 /// Builds the audio input stream with VAD (Voice Activity Detection).
 fn build_audio_stream(
@@ -592,6 +614,7 @@ fn build_audio_stream(
 }
 
 /// Processes an audio chunk using VAD, updating state and writing data when speech is detected.
+/// Processes an audio chunk using VAD, updating state and writing data when speech is detected.
 fn process_audio_chunk(
     data: &[i16],
     vad: &mut Vad,
@@ -625,94 +648,90 @@ fn process_audio_chunk(
         };
 
         if is_voice {
-            println!("Voice detected, resetting last_active_time");
-            {
-                let state = state_arc.lock().unwrap();
-                *state.last_active_time.lock().unwrap() = Instant::now();
-            }
-            if elapsed >= Duration::from_millis(200) {
-                {
-                    let state = state_arc.lock().unwrap();
-                    *state.is_speaking.lock().unwrap() = true;
-                }
-                let _ = voice_tx.try_send(());
-            }
-
-            let mut buffer = active_buffer.lock().unwrap();
-            buffer.extend_from_slice(chunk);
+            handle_voice_detected(state_arc, active_buffer, chunk, elapsed, voice_tx);
         } else if speaking {
-            let silence_duration = {
-                let state = state_arc.lock().unwrap();
-                state.silence_duration
-            };
-
-            if elapsed >= silence_duration {
-                println!("Silence duration reached after {:?}", elapsed);
-                {
-                    let state = state_arc.lock().unwrap();
-                    *state.is_speaking.lock().unwrap() = false;
-                }
-
-                let silence_padding = {
-                    let state = state_arc.lock().unwrap();
-                    state.silence_padding
-                };
-                let sample_rate = {
-                    let state = state_arc.lock().unwrap();
-                    state.audio_config.sample_rate
-                };
-
-                let padding_samples = (silence_padding.as_secs_f32() * sample_rate as f32) as usize;
-                let mut buffer = active_buffer.lock().unwrap();
-                let end_index = buffer.len().saturating_sub(padding_samples);
-                let trimmed_audio = &buffer[..end_index];
-
-                let mut writer = writer.lock().unwrap();
-                for &sample in trimmed_audio {
-                    writer.write_sample(sample).unwrap_or_else(|e| {
-                        eprintln!("Failed to write sample: {}", e);
-                    });
-                }
-
-                buffer.clear();
-                return;
-            } else {
-                println!("In silence, but duration not yet reached. Elapsed: {:?}", elapsed);
-                let mut buffer = active_buffer.lock().unwrap();
-                buffer.extend_from_slice(chunk);
-            }
+            handle_silence_detected(state_arc, active_buffer, writer, chunk, elapsed);
         }
     }
 }
 
-/// Waits for silence to be detected for the given duration.
-fn wait_for_silence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
-    println!("Entering wait_for_silence");
-
-    while {
+fn handle_voice_detected(
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+    active_buffer: &Arc<Mutex<Vec<i16>>>,
+    chunk: &[i16],
+    elapsed: Duration,
+    voice_tx: &Sender<()>,
+) {
+    // Voice detected, reset last active time
+    {
         let state = state_arc.lock().unwrap();
-        let last_active = *state.last_active_time.lock().unwrap();
-        let elapsed = last_active.elapsed();
-        
-        println!("Current silence duration: {:?}", elapsed);
-        
-        state.state == RecordingState::Recording && elapsed < state.silence_duration
-    } {
-        std::thread::sleep(Duration::from_millis(100));
-        
-        let state = state_arc.lock().unwrap();
-        if state.state == RecordingState::Paused {
-            println!("Recording paused, aborting wait_for_silence");
-            return Err(RecorderError::RecordingPaused);
-        }
-        if state.state == RecordingState::Idle {
-            println!("Recording stopped, aborting wait_for_silence");
-            return Err(RecorderError::RecordingStopped);
-        }
+        *state.last_active_time.lock().unwrap() = Instant::now();
     }
 
-    println!("Exiting wait_for_silence");
-    Ok(())
+    if elapsed >= Duration::from_millis(200) {
+        // Set speaking to true and send voice signal
+        {
+            let state = state_arc.lock().unwrap();
+            *state.is_speaking.lock().unwrap() = true;
+        }
+        let _ = voice_tx.try_send(());
+    }
+
+    // Extend active buffer with current chunk
+    let mut buffer = active_buffer.lock().unwrap();
+    buffer.extend_from_slice(chunk);
+}
+
+fn handle_silence_detected(
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+    active_buffer: &Arc<Mutex<Vec<i16>>>,
+    writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
+    chunk: &[i16],
+    elapsed: Duration,
+) {
+    let silence_duration = {
+        let state = state_arc.lock().unwrap();
+        state.silence_duration
+    };
+
+    if elapsed >= silence_duration {
+        // Silence duration reached, stop speaking and write trimmed audio
+        {
+            let state = state_arc.lock().unwrap();
+            *state.is_speaking.lock().unwrap() = false;
+        }
+
+        write_trimmed_audio(state_arc, active_buffer, writer);
+    } else {
+        // Extend active buffer with current chunk
+        let mut buffer = active_buffer.lock().unwrap();
+        buffer.extend_from_slice(chunk);
+    }
+}
+
+fn write_trimmed_audio(
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+    active_buffer: &Arc<Mutex<Vec<i16>>>,
+    writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
+) {
+    let (silence_padding, sample_rate) = {
+        let state = state_arc.lock().unwrap();
+        (state.silence_padding, state.audio_config.sample_rate)
+    };
+
+    let padding_samples = (silence_padding.as_secs_f32() * sample_rate as f32) as usize;
+    let mut buffer = active_buffer.lock().unwrap();
+    let end_index = buffer.len().saturating_sub(padding_samples);
+    let trimmed_audio = &buffer[..end_index];
+
+    let mut writer = writer.lock().unwrap();
+    for &sample in trimmed_audio {
+        writer.write_sample(sample).unwrap_or_else(|e| {
+            eprintln!("Failed to write sample: {}", e);
+        });
+    }
+
+    buffer.clear();
 }
 
 /// Returns the frame length for the given sample rate, used in VAD.
