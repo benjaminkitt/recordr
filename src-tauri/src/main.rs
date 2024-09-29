@@ -12,6 +12,7 @@ use audio::{
     stop_auto_record,
     pause_auto_record,
     resume_auto_record,
+    load_audio_file,
     Recorder, // Import the Recorder struct
 };
 
@@ -39,6 +40,7 @@ fn main() {
             create_new_project,
             open_project,
             save_project,
+            load_audio_file,
         ])
         .run(generate_context!())
         .expect("error while running tauri application");

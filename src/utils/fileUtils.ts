@@ -91,13 +91,17 @@ export async function generateFilename(sentence: Sentence) {
 
 export async function playSentence(sentence: Sentence) {
   const fullPath = await generateFilename(sentence);
-  const audioData = await readBinaryFile(fullPath, { dir: BaseDirectory.Home });
-  const blob = new Blob([audioData], { type: 'audio/wav' });
-  const audio = new Audio();
-  audio.src = URL.createObjectURL(blob);
-  audio.play();
+  try {
+    const audioData: number[] = await invoke('load_audio_file', { filePath: fullPath });
+    const uint8Array = new Uint8Array(audioData);
+    const blob = new Blob([uint8Array], { type: 'audio/wav' });
+    const audio = new Audio();
+    audio.src = URL.createObjectURL(blob);
+    audio.play();
+  } catch (error) {
+    console.error('Error playing audio:', error);
+  }
 }
-
 export async function handleFileImport() {
   try {
     const selected = await open({

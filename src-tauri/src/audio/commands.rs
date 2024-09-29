@@ -2,6 +2,8 @@ use std::sync::{Arc, Mutex};
 use tauri::State;
 use crate::models::Sentence;
 use super::recorder::Recorder;
+use std::fs::File;
+use std::io::Read;
 
 /// Starts a standard recording and writes to a WAV file.
 #[tauri::command]
@@ -72,4 +74,12 @@ pub fn resume_auto_record(state: State<Arc<Mutex<Recorder>>>) -> Result<(), Stri
     let recorder_state = Arc::clone(state.inner());
     let mut recorder = recorder_state.lock().unwrap();
     recorder.resume_auto_record()
+}
+
+#[tauri::command]
+pub fn load_audio_file(file_path: String) -> Result<Vec<u8>, String> {
+    let mut file = File::open(&file_path).map_err(|e| e.to_string())?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
+    Ok(buffer)
 }
