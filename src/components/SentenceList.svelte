@@ -18,11 +18,13 @@
     pauseAutoRecord,
     resumeAutoRecord,  
   } from "../utils/autoRecord";
+  import { saveProject } from "../utils/fileUtils";
   import { onMount, afterUpdate } from "svelte";
   import { get } from "svelte/store";
   import { listen } from "@tauri-apps/api/event";
   import { RangeSlider } from "@skeletonlabs/skeleton";
   import MdiRemoveBox from "~icons/mdi/remove-box";
+  import MdiPlay from "~icons/mdi/play";
   import { popup } from "@skeletonlabs/skeleton";
   import type { PopupSettings } from "@skeletonlabs/skeleton";
   import { appWindow } from '@tauri-apps/api/window';
@@ -95,12 +97,14 @@
 
     const unlistenFinish = listen(
       "auto-record-finish-sentence",
-      (event: { payload: number }) => {
+      (event: AutoRecordFinishSentenceEvent) => {
         const sentenceIndex = $sentences.findIndex(
-          (s) => s.id === event.payload,
+          (s) => s.id === event.payload.id
         );
         if (sentenceIndex !== -1) {
           $sentences[sentenceIndex].recorded = true;
+          $sentences[sentenceIndex].audioFilePath = event.payload.audioFilePath;
+          saveProject(); // Add this function to auto-save the project
         }
         currentRecordingId = null;
       },
@@ -163,7 +167,7 @@
       newSentence = "";
     }
   }
-  
+
   function removeSentence(index: number) {
     if ($isRecording || isAutoRecording) {
       return; // Don't allow removal while recording
@@ -278,16 +282,18 @@
         >
           <div class="flex justify-between items-center">
             <span>{sentence.text}</span>
-            <div>
+            <div class="flex items-center gap-2">
               {#if sentence.recorded}
                 <span class="badge variant-filled-success">Recorded</span>
                 <button
-                  class="btn variant-ghost"
-                  on:click={() => playSentence(sentence)}>Play</button
+                  class="btn btn-sm variant-ghost"
+                  on:click={() => playSentence(sentence)}
                 >
+                  <MdiPlay />
+                </button>
               {/if}
               <button
-                class="btn variant-filled-error"
+                class="btn btn-sm variant-filled-error"
                 use:popup={removePopupHover}
                 on:click={() => removeSentence(index)}
                 disabled={$isRecording || isAutoRecording}

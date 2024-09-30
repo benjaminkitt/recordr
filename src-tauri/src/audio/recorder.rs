@@ -2,6 +2,7 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{SampleFormat, Stream};
 use hound::{WavSpec, WavWriter, SampleFormat as HoundSampleFormat};
 use log::{debug, error};
+use serde_json::json;
 use std::cell::RefCell;
 use std::fs::File;
 use std::io::BufWriter;
@@ -283,14 +284,19 @@ fn handle_successful_recording(state_arc: &Arc<Mutex<AutoRecordState>>, window: 
   let mut state = state_arc.lock().unwrap();
   let current_index = state.current_sentence_index;
   let total_sentences = state.sentences.len();
-  let sentence_id = state.sentences[current_index].id;
+  let sentence = &state.sentences[current_index];
+  let sentence_id = sentence.id;
+  let audio_file_path = sentence.audio_file_path.clone().unwrap_or_default();
 
-  println!("Finished processing sentence {}/{}", current_index + 1, total_sentences);
+  debug!("Finished processing sentence {}/{}", current_index + 1, total_sentences);
 
   // Let the UI know that we've finished processing the sentence
   window
-      .emit("auto-record-finish-sentence", sentence_id)
-      .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
+        .emit("auto-record-finish-sentence", json!({
+            "id": sentence_id,
+            "audioFilePath": audio_file_path
+        }))
+        .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
 
   state.current_sentence_index += 1;
 }

@@ -11,5 +11,8 @@ export type AutoRecordStartSentenceEvent = {
 };
 
 export type AutoRecordFinishSentenceEvent = {
-  payload: number; // Sentence index
+  payload: {
+    id: number;
+    audioFilePath: string;
+  };
 };
