@@ -17,6 +17,8 @@ pub struct AudioConfig {
     pub sample_rate: usize,
 }
 
+// Enum for audio events
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum AudioEvent {
     Voice,
     Silence,

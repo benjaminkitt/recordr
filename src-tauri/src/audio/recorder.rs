@@ -1,17 +1,18 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{SampleFormat, Stream};
 use hound::{WavSpec, WavWriter, SampleFormat as HoundSampleFormat};
+use log::{debug, error};
 use std::cell::RefCell;
 use std::fs::File;
 use std::io::BufWriter;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use crate::models::Sentence;
+use super::auto_record::{AutoRecordState, AutoRecordStateBuilder};
 use super::config::{AudioConfig, DeviceWrapper, RecordingState};
 use super::errors::RecorderError;
 use super::stream::record_sentence;
 use super::utils::{write_input_data, find_supported_config};
-use super::auto_record::{AutoRecordState, AutoRecordStateBuilder};
 
 // Shared state for the recorder.
 pub struct Recorder {
@@ -27,7 +28,6 @@ impl Recorder {
       }
   }
 
-  /// Starts a standard recording and writes to a WAV file.
   /// Starts a standard recording and writes to a WAV file.
   ///
   /// This function sets up an audio input stream, configures a WAV file writer with the
@@ -52,6 +52,7 @@ impl Recorder {
           return Err("Invalid filename".into());
       }
 
+      debug!("Setting up audio inputs and writer...");
       // Get default audio input device and configuration.
       let host = cpal::default_host();
       let device = host
@@ -79,10 +80,10 @@ impl Recorder {
 
       // Error handling for the audio stream.
       let err_fn = move |err| {
-          eprintln!("An error occurred on stream: {}", err);
+          error!("An error occurred on stream: {}", err);
       };
 
-      // Build the input stream based on the sample format.
+      debug!("Building audio stream...");
       let stream = match config.sample_format() {
           SampleFormat::F32 => device.build_input_stream(
               &config.config(),
@@ -154,6 +155,7 @@ impl Recorder {
       silence_padding_ms: u64,
       window: tauri::Window,
   ) -> Result<(), String> {
+      debug!("Starting auto-recording...");
       let audio_config = self.create_audio_config()?;
 
       let auto_record_state = AutoRecordStateBuilder::new()
@@ -178,6 +180,7 @@ impl Recorder {
   }
 
   pub fn stop_auto_record(&mut self) -> Result<(), String> {
+    debug!("Stopping auto-recording...");
       if let Some(state_arc) = self.auto_record_state.take() {
           let mut state = state_arc.lock().unwrap();
           state.stop_recording().map_err(|e| e.to_string())?;
@@ -188,6 +191,7 @@ impl Recorder {
   }
 
   pub fn pause_auto_record(&mut self) -> Result<(), String> {
+      debug!("Pausing auto-recording...");
       if let Some(state_arc) = &self.auto_record_state {
           let mut state = state_arc.lock().unwrap();
           state.pause_recording().map_err(|e| e.to_string())
@@ -197,6 +201,7 @@ impl Recorder {
   }
 
   pub fn resume_auto_record(&mut self) -> Result<(), String> {
+      debug!("Resuming auto-recording...");
       if let Some(state_arc) = &self.auto_record_state {
           let mut state = state_arc.lock().unwrap();
           state.resume_recording().map_err(|e| e.to_string())
@@ -221,6 +226,7 @@ impl Recorder {
   }
 
   fn run_auto_record(&mut self, state_arc: Arc<Mutex<AutoRecordState>>, window: tauri::Window) -> Result<(), String> {
+      debug!("Moving auto-record to thread");
       let thread_state_arc = Arc::clone(&state_arc);
 
       std::thread::spawn(move || {
@@ -231,6 +237,7 @@ impl Recorder {
               };
   
               if !should_continue {
+                  debug!("Auto-record thread exiting as RecordingState is Idle");
                   break;
               }
 
@@ -244,6 +251,7 @@ impl Recorder {
               };
 
               if let Some(sentence) = sentence_option {
+                  // Let the UI know that we're starting a new sentence
                   window.emit("auto-record-start-sentence", sentence.id)
                       .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
 
@@ -255,7 +263,7 @@ impl Recorder {
                           }
                       },
                       Err(e) => {
-                          eprintln!("Error recording sentence: {}", e);
+                          error!("Error recording sentence: {}", e);
                           break;
                       }
                   }
@@ -279,6 +287,7 @@ fn handle_successful_recording(state_arc: &Arc<Mutex<AutoRecordState>>, window: 
 
   println!("Finished processing sentence {}/{}", current_index + 1, total_sentences);
 
+  // Let the UI know that we've finished processing the sentence
   window
       .emit("auto-record-finish-sentence", sentence_id)
       .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));
@@ -307,6 +316,7 @@ fn handle_paused_recording(state_arc: &Arc<Mutex<AutoRecordState>>) -> bool {
 }
 
 fn finalize_recording(state_arc: &Arc<Mutex<AutoRecordState>>, window: &tauri::Window) {
+  // Let the UI know that we've finished the auto-recording process
   window
       .emit("auto-record-complete", true)
       .unwrap_or_else(|e| eprintln!("Failed to emit event: {}", e));

@@ -1,5 +1,6 @@
 use tauri::{generate_context, generate_handler};
 use std::sync::{Arc, Mutex};
+use log::info;
 
 mod audio;
 mod file_utils;
@@ -24,6 +25,11 @@ use file_utils::{
 };
 
 fn main() {
+    // Initialize the logger
+    env_logger::init();
+
+    info!("Starting the application");
+
     // Initialize the Recorder instance inside an Arc and Mutex for shared state management
     let recorder = Arc::new(Mutex::new(Recorder::new()));
 

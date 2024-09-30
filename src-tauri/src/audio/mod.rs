@@ -3,6 +3,7 @@ mod commands;
 mod config;
 mod errors;
 mod recorder;
+mod recording_session;
 mod stream;
 mod utils;
 

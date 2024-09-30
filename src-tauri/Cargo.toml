@@ -19,7 +19,8 @@ hound = "3.4.0" # For writing WAV files
 webrtc-vad = "0.4.0" # Voice Activity Detection (VAD)
 csv = "1.3.0" # For writing CSV files
 crossbeam-channel = "0.5.13" # For sending audio data between threads
-
+log = "0.4"
+env_logger = "0.10"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
