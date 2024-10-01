@@ -1,6 +1,6 @@
 [package]
 name = "recordr"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
@@ -11,7 +11,7 @@ edition = "2021"
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = [ "dialog-open", "path-all", "dialog-save", "shell-open"] }
+tauri = { version = "1", features = [ "window-set-title", "dialog-open", "path-all", "dialog-save", "shell-open"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 cpal = "0.13" # Audio input/output
