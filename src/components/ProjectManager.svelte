@@ -21,7 +21,3 @@
   <button on:click={saveCurrentProject} disabled={!$isProjectLoaded} class="btn variant-filled">Save Project</button>
   <button on:click={handleFileImport} disabled={!$isProjectLoaded} class="btn variant-filled">Import Sentences</button>
 </div>
-
-{#if $isProjectLoaded}
-  <p class="mt-4">Current Project: <strong>{$projectName}</strong></p>
-{/if}

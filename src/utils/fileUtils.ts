@@ -13,6 +13,11 @@ import {
   , isRecording 
 } from '../stores/projectStore';
 import type { Sentence } from '../types';
+import { appWindow } from '@tauri-apps/api/window';
+
+async function setWindowTitle(name: string) {
+  await appWindow.setTitle(`Recordr - ${name}`);
+}
 
 export async function newProject() {
   const homePath = await homeDir();
@@ -31,6 +36,7 @@ export async function newProject() {
         projectName.set(name);
         projectDirectory.set(await join(selected, name));
         isProjectLoaded.set(true);
+        await setWindowTitle(name);
       }
     }
   }
@@ -48,9 +54,11 @@ export async function openProject() {
   if (selected) {
     const loadedSentences:[Sentence] = await invoke('open_project', { filePath: selected });
     sentences.set(loadedSentences);
-    projectName.set(selected.split('/').pop()?.replace('.json', '') || '');
+    const name = selected.split('/').pop()?.replace('.json', '') || '';
+    projectName.set(name);
     projectDirectory.set(selected.substring(0, selected.lastIndexOf('/')));
     isProjectLoaded.set(true);
+    await setWindowTitle(name);
   }
 }
 

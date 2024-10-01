@@ -150,8 +150,8 @@
   let newSentence = "";
 
   function addSentence() {
-    if ($isRecording || isAutoRecording) {
-      return; // Don't allow adding while recording
+    if (!$isProjectLoaded || $isRecording || isAutoRecording) {
+      return; // Don't allow adding if no project is loaded or while recording
     }
     const trimmedSentence = newSentence.trim();
     if (trimmedSentence === "") {
@@ -256,7 +256,7 @@
     <button
       class="btn variant-filled shrink-0 inline-flex justify-center items-center gap-x-2"
       on:click={addSentence}
-      disabled={$isRecording || isAutoRecording}
+      disabled={!$isProjectLoaded || $isRecording || isAutoRecording}
     >
       Add Sentence
     </button>

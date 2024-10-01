@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "recordr",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "tauri": {
     "allowlist": {
@@ -22,7 +22,10 @@
       },
       "path": {
         "all": true
-      } 
+      },
+      "window": {
+        "setTitle": true
+      }
     },
     "windows": [
       {
