@@ -10,10 +10,10 @@ pub enum RecorderError {
     CpalPlayStreamError(cpal::PlayStreamError),
     CpalDefaultStreamConfigError(cpal::DefaultStreamConfigError),
     HoundError(hound::Error),
+    StreamPlayError(String),
     Other(String),
 }
 
-// Implement the Display trait for user-friendly error messages
 impl fmt::Display for RecorderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -25,6 +25,7 @@ impl fmt::Display for RecorderError {
             RecorderError::CpalPlayStreamError(e) => write!(f, "Failed to play audio stream: {}", e),
             RecorderError::CpalDefaultStreamConfigError(e) => write!(f, "Failed to get default stream config: {}", e),
             RecorderError::HoundError(e) => write!(f, "Audio processing error: {}", e),
+            RecorderError::StreamPlayError(e) => write!(f, "Failed to play stream: {}", e),
             RecorderError::Other(msg) => write!(f, "{}", msg),
         }
     }

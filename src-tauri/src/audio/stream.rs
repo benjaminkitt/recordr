@@ -2,7 +2,7 @@
 use cpal::traits::{DeviceTrait, StreamTrait};
 use cpal::{SampleFormat, Stream};
 use hound::{WavSpec, WavWriter, SampleFormat as HoundSampleFormat};
-use log::{debug, trace};
+use log::{debug, trace, error};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
@@ -18,33 +18,44 @@ use super::recording_session::RecordingSession;
 
 type AudioStream = Result<Stream, RecorderError>;
 
+
 pub fn record_sentence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
+  debug!("record_sentence: Starting to record sentence");
   let (sentence, writer, path) = prepare_recording(state_arc)?;
   let (active_buffer, voice_tx, voice_rx) = initialize_recording_buffers();
 
-  debug!("Recording sentence: {} ({})", sentence.id, sentence.text);
+  debug!("record_sentence: Recording sentence: {} ({})", sentence.id, sentence.text);
 
   let stream = build_audio_stream(state_arc, writer.clone(), active_buffer.clone(), voice_tx)?;
   
   let session = RecordingSession {
-    stream: Some(stream),
-    writer: writer.clone(),
-    path: path.clone(),
-    state_arc: state_arc.clone(),
+      stream: Some(stream),
+      writer: writer.clone(),
+      path: path.clone(),
+      state_arc: state_arc.clone(),
   };
   
-  session.stream.as_ref().unwrap().play()?;
+  trace!("record_sentence: Recording session initialized, starting stream");
+  if let Err(e) = session.stream.as_ref().unwrap().play() {
+      error!("record_sentence: Failed to start stream. Error: {}", e);
+      return Err(RecorderError::StreamPlayError(e.to_string()));
+  }
 
   let result = (|| {
-    wait_for_audio_event(state_arc, AudioEvent::Voice, &voice_rx)?;
-    wait_for_audio_event(state_arc, AudioEvent::Silence, &voice_rx)?;
-    Ok(())
+      wait_for_audio_event(state_arc, AudioEvent::Voice, &voice_rx)?;
+      wait_for_audio_event(state_arc, AudioEvent::Silence, &voice_rx)?;
+      Ok(())
   })();
 
-  // The RecordingSession will be dropped here, ensuring cleanup
+  if let Err(e) = &result {
+      error!("record_sentence: Error during recording: {:?}", e);
+  } else {
+      debug!("record_sentence: Successfully recorded sentence");
+  }
 
   result
 }
+
 fn prepare_recording(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(Sentence, Arc<Mutex<WavWriter<BufWriter<File>>>>, PathBuf), RecorderError> {
   let state = state_arc.lock().unwrap();
   let sentence = state.sentences[state.current_sentence_index].clone();
@@ -62,6 +73,15 @@ fn prepare_recording(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(Sentenc
       bits_per_sample: 16,
       sample_format: HoundSampleFormat::Int,
   };
+
+  // Add trace logs for audio configuration
+  trace!("Audio configuration:");
+  trace!("  Channels: {}", spec.channels);
+  trace!("  Sample rate: {} Hz", spec.sample_rate);
+  trace!("  Bits per sample: {}", spec.bits_per_sample);
+  trace!("  Sample format: {:?}", spec.sample_format);
+  trace!("  Device: {:?}", state.audio_config.device.0.name());
+
   let writer = Arc::new(Mutex::new(WavWriter::create(&path, spec)?));
   
   Ok((sentence, writer, path))
@@ -124,6 +144,8 @@ fn build_audio_stream(
       let state = state_arc.lock().unwrap();
       state.audio_config.config.sample_format()
   };
+
+  trace!("Audio stream sample format: {:?}", sample_format);
 
   let err_fn = |err| eprintln!("Stream error: {}", err);
 
@@ -213,6 +235,7 @@ fn process_audio_chunk(
 
   for chunk in data.chunks(frame_length) {
       if chunk.len() < frame_length {
+          trace!("Chunk too short, skipping");
           continue;
       }
 
