@@ -24,7 +24,12 @@
   import { listen } from "@tauri-apps/api/event";
   import { RangeSlider } from "@skeletonlabs/skeleton";
   import MdiRemoveBox from "~icons/mdi/remove-box";
-  import MdiPlay from "~icons/mdi/play";
+  import MdiPlus from '~icons/mdi/plus';
+  import MdiRecordRec from '~icons/mdi/record-rec';
+  import MdiStop from '~icons/mdi/stop';
+  import MdiPlayPause from '~icons/mdi/play-pause';
+  import MdiPause from '~icons/mdi/pause';
+  import MdiPlay from '~icons/mdi/play';
   import { popup } from "@skeletonlabs/skeleton";
   import type { PopupSettings } from "@skeletonlabs/skeleton";
   import { appWindow } from '@tauri-apps/api/window';
@@ -266,7 +271,8 @@
       on:click={addSentence}
       disabled={!$isProjectLoaded || $isRecording || isAutoRecording || newSentence.trim().length === 0}
     >
-      Add Sentence
+      <MdiPlus />
+      <span class="ml-2">Add Sentence</span>
     </button>
   </div>
 
@@ -328,7 +334,13 @@
       on:click={() => toggleRecording()}
       disabled={!$selectedSentence}
     >
-      {$isRecording ? "Stop Recording" : "Start Recording"}
+      {#if $isRecording}
+        <MdiStop />
+        <span class="ml-2">Stop Recording</span>
+      {:else}
+        <MdiRecordRec />
+        <span class="ml-2">Start Recording</span>
+      {/if}
     </button>
     {#if $isRecording}
       <span class="badge variant-filled-error animate-pulse">Recording</span>
@@ -338,14 +350,26 @@
       on:click={toggleAutoRecord}
       disabled={!$isProjectLoaded || !$sentences.length}
     >
-      {isAutoRecording ? "Stop Auto-Record" : "Start Auto-Record"}
+      {#if isAutoRecording}
+        <MdiStop />
+        <span class="ml-2">Stop Auto-Record</span>
+      {:else}
+        <MdiPlayPause />
+        <span class="ml-2">Start Auto-Record</span>
+      {/if}
     </button>
     {#if isAutoRecording}
       <button
         class="btn variant-filled"
         on:click={togglePauseResume}
       >
-        {isPaused ? "Resume Auto-Record" : "Pause Auto-Record"}
+        {#if isPaused}
+          <MdiPlay />
+          <span class="ml-2">Resume Auto-Record</span>
+        {:else}
+          <MdiPause />
+          <span class="ml-2">Pause Auto-Record</span>
+        {/if}
       </button>
     {/if}
   </div>
