@@ -158,6 +158,7 @@ fn build_audio_stream(
               let voice_tx = voice_tx.clone();
 
               move |data: &[i16], _: &cpal::InputCallbackInfo| {
+                  trace!("Input callback data length: {}", data.len());
                   let mut vad = Vad::new_with_rate(SampleRate::Rate16kHz);
                   vad.set_mode(VadMode::VeryAggressive);
 
@@ -173,6 +174,7 @@ fn build_audio_stream(
           };
 
           let state = state_arc.lock().unwrap();
+          trace!("Building input stream with config: {:?}", state.audio_config.config.config());
           state.audio_config.device.0.build_input_stream(
               &state.audio_config.config.config(),
               input_data_fn,
@@ -188,6 +190,7 @@ fn build_audio_stream(
               let voice_tx = voice_tx.clone();
 
               move |data: &[f32], _: &cpal::InputCallbackInfo| {
+                trace!("Input callback data length: {}", data.len());
                   let data_i16: Vec<i16> = data
                       .iter()
                       .map(|&sample| (sample * i16::MAX as f32) as i16)
@@ -208,6 +211,7 @@ fn build_audio_stream(
           };
 
           let state = state_arc.lock().unwrap();
+          trace!("Building input stream with config: {:?}", state.audio_config.config.config());
           state.audio_config.device.0.build_input_stream(
               &state.audio_config.config.config(),
               input_data_fn,
@@ -234,6 +238,7 @@ fn process_audio_chunk(
   };
 
   for chunk in data.chunks(frame_length) {
+      trace!("Chunk length: {}, Frame length: {}", chunk.len(), frame_length);
       if chunk.len() < frame_length {
           trace!("Chunk too short, skipping");
           continue;
