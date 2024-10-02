@@ -1,6 +1,4 @@
 import { invoke } from '@tauri-apps/api/tauri';
-import { readTextFile, writeTextFile } from '@tauri-apps/api/fs';
-import { readBinaryFile, BaseDirectory } from '@tauri-apps/api/fs';
 import { open } from '@tauri-apps/api/dialog';
 import { join, homeDir } from '@tauri-apps/api/path';
 import { get } from 'svelte/store';
@@ -14,31 +12,42 @@ import {
 } from '../stores/projectStore';
 import type { Sentence } from '../types';
 import { appWindow } from '@tauri-apps/api/window';
+import type { ModalComponent, ModalSettings, ModalStore } from '@skeletonlabs/skeleton';
+import ProjectNameInput from '../components/ProjectNameInput.svelte';
+
 
 async function setWindowTitle(name: string) {
   await appWindow.setTitle(`Recordr - ${name}`);
 }
 
-export async function newProject() {
+export async function newProject(modalStore:ModalStore) {
   const homePath = await homeDir();
   const selected = await open({
     directory: true,
     defaultPath: homePath,
     multiple: false,
-    title: 'Select Project Save Location (Home Directory)',
+    title: 'Select the location for your project directory',
   }) as string;  // Cast as string since multiple is false
 
   if (selected) {
-    const name = prompt('Enter a name for your project:');
-    if (name) {
-      const result = await invoke('create_new_project', { parentDir: selected, projectName: name });
-      if (result) {
-        projectName.set(name);
-        projectDirectory.set(await join(selected, name));
-        isProjectLoaded.set(true);
-        await setWindowTitle(name);
+    const modal: ModalSettings = {
+        type: 'component',
+        component: 'projectNameInput',
+        title: 'Create New Project',
+        body: 'Please provide a name for your new project.',
+        response: async (value: string) => {
+          if (value) {
+            const result = await invoke('create_new_project', { parentDir: selected, projectName: value });
+            if (result) {
+              projectName.set(value);
+              projectDirectory.set(await join(selected, value));
+              isProjectLoaded.set(true);
+              await setWindowTitle(value);
+            }
+          }
+        }
       }
-    }
+    modalStore.trigger(modal);
   }
 }
 

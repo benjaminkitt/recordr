@@ -154,8 +154,8 @@
       return; // Don't allow adding if no project is loaded or while recording
     }
     const trimmedSentence = newSentence.trim();
-    if (trimmedSentence === "") {
-      alert("Please enter a sentence.");
+    if (trimmedSentence.length === 0) {
+      return; // Don't add empty sentences
     } else if ($sentences.some((s) => s.text === trimmedSentence)) {
       alert("This sentence is already in the list.");
     } else {
@@ -164,7 +164,14 @@
         ...$sentences,
         { id: newId, text: trimmedSentence, recorded: false },
       ];
+      saveProject(); // Add this function to auto-save the project
       newSentence = "";
+    }
+  }
+
+  function handleSentenceKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      addSentence();
     }
   }
 
@@ -252,11 +259,12 @@
       class="input py-3 px-4 block w-full"
       placeholder="Enter a new sentence"
       bind:value={newSentence}
+      on:keydown={handleSentenceKeydown}
     />
     <button
       class="btn variant-filled shrink-0 inline-flex justify-center items-center gap-x-2"
       on:click={addSentence}
-      disabled={!$isProjectLoaded || $isRecording || isAutoRecording}
+      disabled={!$isProjectLoaded || $isRecording || isAutoRecording || newSentence.trim().length === 0}
     >
       Add Sentence
     </button>
