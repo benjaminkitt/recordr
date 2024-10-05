@@ -232,10 +232,7 @@ fn process_audio_chunk(
   writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
   voice_tx: &Sender<()>,
 ) {
-  let frame_length = {
-      let state = state_arc.lock().unwrap();
-      get_frame_length(state.audio_config.sample_rate).unwrap_or(160)
-  };
+  let frame_length = 160;
 
   for chunk in data.chunks(frame_length) {
       trace!("Chunk length: {}, Frame length: {}", chunk.len(), frame_length);
@@ -349,17 +346,6 @@ fn write_trimmed_audio(
   }
 
   buffer.clear();
-}
-
-/// Returns the frame length for the given sample rate, used in VAD.
-fn get_frame_length(sample_rate: usize) -> Result<usize, RecorderError> {
-  match sample_rate {
-      8000 => Ok(160),
-      16000 => Ok(320),
-      32000 => Ok(640),
-      48000 => Ok(960),
-      _ => Err(RecorderError::Other(format!("Unsupported sample rate: {}", sample_rate))),
-  }
 }
 
 /// Creates or gets the project directory based on the provided path.
