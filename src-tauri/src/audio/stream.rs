@@ -8,6 +8,7 @@ use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
+use voice_activity_detector::{VoiceActivityDetector, IteratorExt};
 use webrtc_vad::{SampleRate, Vad, VadMode};
 use crossbeam_channel::{bounded, Receiver, Sender};
 use crate::models::Sentence;
@@ -134,135 +135,137 @@ fn check_recording_state(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), 
 
 /// Builds the audio input stream with VAD (Voice Activity Detection).
 fn build_audio_stream(
-  state_arc: &Arc<Mutex<AutoRecordState>>,
-  writer: Arc<Mutex<WavWriter<BufWriter<File>>>>,
-  active_buffer: Arc<Mutex<Vec<i16>>>,
-  voice_tx: Sender<()>,
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+    writer: Arc<Mutex<WavWriter<BufWriter<File>>>>,
+    active_buffer: Arc<Mutex<Vec<i16>>>,
+    voice_tx: Sender<()>,
 ) -> AudioStream {
-  debug!("Building audio stream");
-  let sample_format = {
-      let state = state_arc.lock().unwrap();
-      state.audio_config.config.sample_format()
-  };
+    debug!("Building audio stream");
+    let sample_format = {
+        let state = state_arc.lock().unwrap();
+        state.audio_config.config.sample_format()
+    };
 
-  trace!("Audio stream sample format: {:?}", sample_format);
+    trace!("Audio stream sample format: {:?}", sample_format);
 
-  let err_fn = |err| eprintln!("Stream error: {}", err);
+    let err_fn = |err| eprintln!("Stream error: {}", err);
 
-  match sample_format {
-      SampleFormat::I16 => {
-          let input_data_fn = {
-              let state_arc = Arc::clone(state_arc);
-              let writer = Arc::clone(&writer);
-              let active_buffer = Arc::clone(&active_buffer);
-              let voice_tx = voice_tx.clone();
+    let mut vad = VoiceActivityDetector::builder()
+        .sample_rate(16000)
+        .chunk_size(512usize)
+        .build()
+        .expect("Failed to build VAD");
 
-              move |data: &[i16], _: &cpal::InputCallbackInfo| {
-                  trace!("Input callback data length: {}", data.len());
-                  let mut vad = Vad::new_with_rate(SampleRate::Rate16kHz);
-                  vad.set_mode(VadMode::VeryAggressive);
+    match sample_format {
+        SampleFormat::I16 => {
+            let input_data_fn = {
+                let state_arc = Arc::clone(state_arc);
+                let writer = Arc::clone(&writer);
+                let active_buffer = Arc::clone(&active_buffer);
+                let voice_tx = voice_tx.clone();
 
-                  process_audio_chunk(
-                      data,
-                      &mut vad,
-                      &state_arc,
-                      &active_buffer,
-                      &writer,
-                      &voice_tx,
-                  );
-              }
-          };
+                move |data: &[i16], _: &cpal::InputCallbackInfo| {
+                    trace!("Input callback data length: {}", data.len());
 
-          let state = state_arc.lock().unwrap();
-          trace!("Building input stream with config: {:?}", state.audio_config.config.config());
-          state.audio_config.device.0.build_input_stream(
-              &state.audio_config.config.config(),
-              input_data_fn,
-              err_fn,
-          )
-          .map_err(RecorderError::CpalBuildStreamError)
-      }
-      SampleFormat::F32 => {
-          let input_data_fn = {
-              let state_arc = Arc::clone(state_arc);
-              let writer = Arc::clone(&writer);
-              let active_buffer = Arc::clone(&active_buffer);
-              let voice_tx = voice_tx.clone();
+                    process_audio_chunk(
+                        data,
+                        &mut vad,
+                        &state_arc,
+                        &active_buffer,
+                        &writer,
+                        &voice_tx,
+                    );
+                }
+            };
 
-              move |data: &[f32], _: &cpal::InputCallbackInfo| {
-                trace!("Input callback data length: {}", data.len());
-                  let data_i16: Vec<i16> = data
-                      .iter()
-                      .map(|&sample| (sample * i16::MAX as f32) as i16)
-                      .collect();
+            let state = state_arc.lock().unwrap();
+            trace!("Building input stream with config: {:?}", state.audio_config.config.config());
+            state.audio_config.device.0.build_input_stream(
+                &state.audio_config.config.config(),
+                input_data_fn,
+                err_fn,
+            )
+            .map_err(RecorderError::CpalBuildStreamError)
+        }
+        SampleFormat::F32 => {
+            let input_data_fn = {
+                let state_arc = Arc::clone(state_arc);
+                let writer = Arc::clone(&writer);
+                let active_buffer = Arc::clone(&active_buffer);
+                let voice_tx = voice_tx.clone();
 
-                  let mut vad = Vad::new_with_rate(SampleRate::Rate16kHz);
-                  vad.set_mode(VadMode::VeryAggressive);
+                move |data: &[f32], _: &cpal::InputCallbackInfo| {
+                    trace!("Input callback data length: {}", data.len());
+                    let data_i16: Vec<i16> = data
+                        .iter()
+                        .map(|&sample| (sample * i16::MAX as f32) as i16)
+                        .collect();
 
-                  process_audio_chunk(
-                      &data_i16,
-                      &mut vad,
-                      &state_arc,
-                      &active_buffer,
-                      &writer,
-                      &voice_tx,
-                  );
-              }
-          };
+                    process_audio_chunk(
+                        &data_i16,
+                        &mut vad,
+                        &state_arc,
+                        &active_buffer,
+                        &writer,
+                        &voice_tx,
+                    );
+                }
+            };
 
-          let state = state_arc.lock().unwrap();
-          trace!("Building input stream with config: {:?}", state.audio_config.config.config());
-          state.audio_config.device.0.build_input_stream(
-              &state.audio_config.config.config(),
-              input_data_fn,
-              err_fn,
-          )
-          .map_err(RecorderError::CpalBuildStreamError)
-      }
-      _ => Err(RecorderError::Other("Unsupported sample format".into())),
-  }
-}
+            let state = state_arc.lock().unwrap();
+            trace!("Building input stream with config: {:?}", state.audio_config.config.config());
+            state.audio_config.device.0.build_input_stream(
+                &state.audio_config.config.config(),
+                input_data_fn,
+                err_fn,
+            )
+            .map_err(RecorderError::CpalBuildStreamError)
+        }
+        _ => Err(RecorderError::Other("Unsupported sample format".into())),
+    }
+} 
 
 /// Processes an audio chunk using VAD, updating state and writing data when speech is detected.
 fn process_audio_chunk(
-  data: &[i16],
-  vad: &mut Vad,
-  state_arc: &Arc<Mutex<AutoRecordState>>,
-  active_buffer: &Arc<Mutex<Vec<i16>>>,
-  writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
-  voice_tx: &Sender<()>,
+    data: &[i16],
+    vad: &mut VoiceActivityDetector,
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+    active_buffer: &Arc<Mutex<Vec<i16>>>,
+    writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
+    voice_tx: &Sender<()>,
 ) {
-  let frame_length = 160;
+    let chunk_size = 512;
 
-  for chunk in data.chunks(frame_length) {
-      trace!("Chunk length: {}, Frame length: {}", chunk.len(), frame_length);
-      if chunk.len() < frame_length {
-          trace!("Chunk too short, skipping");
-          continue;
-      }
+    for chunk in data.chunks(chunk_size) {
+        trace!("Chunk length: {}, Chunk size: {}", chunk.len(), chunk_size);
+        if chunk.len() < chunk_size {
+            trace!("Chunk too short, skipping");
+            continue;
+        }
 
-      let is_voice = vad.is_voice_segment(chunk).unwrap_or(false);
+        let probability = vad.predict(chunk.to_vec());
+        let is_voice = probability >= 0.5; // You can adjust this threshold
 
-      let elapsed = {
-          let state = state_arc.lock().unwrap();
-          let last_active = state.last_active_time.lock().unwrap();
-          last_active.elapsed()
-      };
+        let elapsed = {
+            let state = state_arc.lock().unwrap();
+            let last_active = state.last_active_time.lock().unwrap();
+            last_active.elapsed()
+        };
 
-      let speaking = {
-          let state = state_arc.lock().unwrap();
-          let speaking = state.is_speaking.lock().unwrap();
-          *speaking
-      };
+        let speaking = {
+            let state = state_arc.lock().unwrap();
+            let speaking = state.is_speaking.lock().unwrap();
+            *speaking
+        };
 
-      trace!("Processing audio chunk: is_voice: {}, speaking: {}, elapsed: {}", is_voice, speaking, elapsed.as_millis());
+        trace!("Processing audio chunk: voice_probability: {}, is_voice: {}, speaking: {}, elapsed: {}", probability, is_voice, speaking, elapsed.as_millis());
 
-      if is_voice {
-          handle_voice_detected(state_arc, active_buffer, chunk, elapsed, voice_tx);
-      } else if speaking {
-          handle_silence_detected(state_arc, active_buffer, writer, chunk, elapsed);
-      }
-  }
+        if is_voice {
+            handle_voice_detected(state_arc, active_buffer, chunk, elapsed, voice_tx);
+        } else if speaking {
+            handle_silence_detected(state_arc, active_buffer, writer, chunk, elapsed);
+        }
+    }
 }
 
 fn handle_voice_detected(
@@ -346,6 +349,18 @@ fn write_trimmed_audio(
   }
 
   buffer.clear();
+}
+
+
+/// Returns the frame length for the given sample rate, used in VAD.
+fn get_frame_length(sample_rate: usize) -> Result<usize, RecorderError> {
+  match sample_rate {
+      8000 => Ok(160),
+      16000 => Ok(320),
+      32000 => Ok(640),
+      48000 => Ok(960),
+      _ => Err(RecorderError::Other(format!("Unsupported sample rate: {}", sample_rate))),
+  }
 }
 
 /// Creates or gets the project directory based on the provided path.
