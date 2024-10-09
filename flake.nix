@@ -50,6 +50,7 @@
 
           # Use a shellHook to append to PATH
           shellHook = ''
+            export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
             export PATH="$HOME/.cargo/bin:$PATH"
             export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath libraries}:$LD_LIBRARY_PATH
             export LIBCLANG_PATH=${pkgs.libclang.lib}/lib
@@ -85,12 +86,3 @@
       }
     );
 }
-
-{
-  inputs = {
-    fenix = {
-      url = "github:nix-community/fenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nixpkgs.url = "nixpkgs/nixos-unstable";
-  };

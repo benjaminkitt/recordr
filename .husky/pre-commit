@@ -2,7 +2,7 @@
 . "$(dirname "$0")/_/husky.sh"
 
 # Format Rust files
-cd src-tauri && rustup run nightly -- rustfmt ./src/main.rs --edition 2018 --check
+cd src-tauri && rustup run nightly -- rustfmt ./src/main.rs --edition 2021 --check
 cd ..
 
 # Run ESLint

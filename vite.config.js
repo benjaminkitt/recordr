@@ -1,13 +1,10 @@
-import { defineConfig } from "vite";
-import { sveltekit } from "@sveltejs/kit/vite";
-import Icons from "unplugin-icons/vite";
+import { defineConfig } from 'vite';
+import { sveltekit } from '@sveltejs/kit/vite';
+import Icons from 'unplugin-icons/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
-  plugins: [
-    sveltekit(),
-    Icons({ compiler: 'svelte' })
-  ],
+  plugins: [sveltekit(), Icons({ compiler: 'svelte' })],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
@@ -19,8 +16,7 @@ export default defineConfig(async () => ({
     strictPort: true,
     watch: {
       // 3. tell vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      ignored: ['**/src-tauri/**'],
     },
   },
 }));
-

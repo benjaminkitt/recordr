@@ -4,21 +4,20 @@ import eslintPluginSvelte from 'eslint-plugin-svelte';
 import tseslint from 'typescript-eslint';
 import svelteConfig from './svelte.config.js';
 import globals from 'globals';
-import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
+import { default as eslintPluginPrettierRecommended } from 'eslint-plugin-prettier/recommended';
 
 export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...eslintPluginSvelte.configs['flat/prettier'],
-  prettierConfig,
+  eslintPluginPrettierRecommended,
   {
     plugins: {
       prettier: prettierPlugin,
     },
     rules: {
       'prettier/prettier': 'error',
-      // Your existing rules here
     },
   },
   {
@@ -34,7 +33,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
     languageOptions: {
       parserOptions: {
         project: './tsconfig.json',
