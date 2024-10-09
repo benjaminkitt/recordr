@@ -39,7 +39,8 @@
           yarn
           alsaLib
           webrtc-audio-processing
-          libclang 
+          libclang
+          rustup
         ];
       in
       {
@@ -63,6 +64,7 @@
             pkgs.nodejs-18_x
             pkgs.rustc
             pkgs.cargo
+            pkgs.rustup
           ];
 
           buildInputs = [

@@ -1,21 +1,21 @@
+use super::config::{AudioConfig, RecordingState};
+use crate::models::Sentence;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
-use crate::models::Sentence;
-use super::config::{AudioConfig, RecordingState};
 
 // Main AutoRecordState struct
 #[derive(Debug)]
 pub struct AutoRecordState {
-  pub sentences: Vec<Sentence>,
-  pub project_directory: String,
-  pub silence_threshold: f32,
-  pub silence_duration: Duration,
-  pub silence_padding: Duration,
-  pub current_sentence_index: usize,
-  pub audio_config: AudioConfig,
-  pub state: RecordingState,
-  pub is_speaking: Arc<Mutex<bool>>,
-  pub last_active_time: Arc<Mutex<Instant>>,
+    pub sentences: Vec<Sentence>,
+    pub project_directory: String,
+    pub silence_threshold: f32,
+    pub silence_duration: Duration,
+    pub silence_padding: Duration,
+    pub current_sentence_index: usize,
+    pub audio_config: AudioConfig,
+    pub state: RecordingState,
+    pub is_speaking: Arc<Mutex<bool>>,
+    pub last_active_time: Arc<Mutex<Instant>>,
 }
 
 impl AutoRecordState {
@@ -25,7 +25,7 @@ impl AutoRecordState {
             RecordingState::Idle => {
                 self.state = RecordingState::Recording;
                 Ok(())
-            },
+            }
             _ => Err("Can only start recording from Idle state"),
         }
     }
@@ -35,7 +35,7 @@ impl AutoRecordState {
             RecordingState::Recording => {
                 self.state = RecordingState::Paused;
                 Ok(())
-            },
+            }
             _ => Err("Can only pause from Recording state"),
         }
     }
@@ -45,7 +45,7 @@ impl AutoRecordState {
             RecordingState::Paused => {
                 self.state = RecordingState::Recording;
                 Ok(())
-            },
+            }
             _ => Err("Can only resume from Paused state"),
         }
     }
@@ -55,7 +55,7 @@ impl AutoRecordState {
             RecordingState::Recording | RecordingState::Paused => {
                 self.state = RecordingState::Idle;
                 Ok(())
-            },
+            }
             _ => Err("Can only stop from Recording or Paused state"),
         }
     }

@@ -1,28 +1,23 @@
-use tauri::{generate_context, generate_handler};
-use std::sync::{Arc, Mutex};
 use log::info;
+use std::sync::{Arc, Mutex};
+use tauri::{generate_context, generate_handler};
 
 mod audio;
 mod file_utils;
 mod models;
 
 use audio::{
-    start_recording,
-    stop_recording,
-    start_auto_record,
-    stop_auto_record,
+    load_audio_file,
     pause_auto_record,
     resume_auto_record,
-    load_audio_file,
+    start_auto_record,
+    start_recording,
+    stop_auto_record,
+    stop_recording,
     Recorder, // Import the Recorder struct
 };
 
-use file_utils::{
-    import_sentences,
-    create_new_project,
-    open_project,
-    save_project,
-};
+use file_utils::{create_new_project, import_sentences, open_project, save_project};
 
 fn main() {
     // Initialize the logger

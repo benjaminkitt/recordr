@@ -1,135 +1,143 @@
-
+use super::auto_record::AutoRecordState;
+use super::config::{AudioChunkWithVAD, AudioEvent, RecordingState};
+use super::errors::RecorderError;
+use super::recording_session::RecordingSession;
+use crate::models::Sentence;
 use cpal::traits::{DeviceTrait, StreamTrait};
 use cpal::{SampleFormat, Stream};
-use hound::{WavSpec, WavWriter, SampleFormat as HoundSampleFormat};
-use log::{debug, trace, error};
+use crossbeam_channel::{bounded, Receiver, Sender};
+use hound::{SampleFormat as HoundSampleFormat, WavSpec, WavWriter};
+use log::{debug, error, trace};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use voice_activity_detector::VoiceActivityDetector;
-use crossbeam_channel::{bounded, Receiver, Sender};
-use crate::models::Sentence;
-use super::auto_record::AutoRecordState;
-use super::config::{AudioEvent, RecordingState, AudioChunkWithVAD};
-use super::errors::RecorderError;
-use super::recording_session::RecordingSession;
 
 type AudioStream = Result<Stream, RecorderError>;
 
-
 pub fn record_sentence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
-  debug!("record_sentence: Starting to record sentence");
-  let (sentence, writer, path) = prepare_recording(state_arc)?;
-  let (audio_chunks, voice_tx, voice_rx) = initialize_recording_buffers();
+    debug!("record_sentence: Starting to record sentence");
+    let (sentence, writer, path) = prepare_recording(state_arc)?;
+    let (audio_chunks, voice_tx, voice_rx) = initialize_recording_buffers();
 
-  debug!("record_sentence: Recording sentence: {} ({})", sentence.id, sentence.text);
+    debug!(
+        "record_sentence: Recording sentence: {} ({})",
+        sentence.id, sentence.text
+    );
 
-  let stream = build_audio_stream(state_arc, writer.clone(), audio_chunks.clone(), voice_tx)?;
-  
-  let session = RecordingSession {
-      stream: Some(stream),
-      writer: writer.clone(),
-      path: path.clone(),
-      state_arc: state_arc.clone(),
-  };
-  
-  trace!("record_sentence: Recording session initialized, starting stream");
-  if let Err(e) = session.stream.as_ref().unwrap().play() {
-      error!("record_sentence: Failed to start stream. Error: {}", e);
-      return Err(RecorderError::StreamPlayError(e.to_string()));
-  }
+    let stream = build_audio_stream(state_arc, writer.clone(), audio_chunks.clone(), voice_tx)?;
 
-  let result = (|| {
-      wait_for_audio_event(state_arc, AudioEvent::Voice, &voice_rx)?;
-      wait_for_audio_event(state_arc, AudioEvent::Silence, &voice_rx)?;
-      Ok(())
-  })();
+    let session = RecordingSession {
+        stream: Some(stream),
+        writer: writer.clone(),
+        path: path.clone(),
+        state_arc: state_arc.clone(),
+    };
 
-  if let Err(e) = &result {
-      error!("record_sentence: Error during recording: {:?}", e);
-  } else {
-      debug!("record_sentence: Successfully recorded sentence");
-  }
+    trace!("record_sentence: Recording session initialized, starting stream");
+    if let Err(e) = session.stream.as_ref().unwrap().play() {
+        error!("record_sentence: Failed to start stream. Error: {}", e);
+        return Err(RecorderError::StreamPlayError(e.to_string()));
+    }
 
-  result
+    let result = (|| {
+        wait_for_audio_event(state_arc, AudioEvent::Voice, &voice_rx)?;
+        wait_for_audio_event(state_arc, AudioEvent::Silence, &voice_rx)?;
+        Ok(())
+    })();
+
+    if let Err(e) = &result {
+        error!("record_sentence: Error during recording: {:?}", e);
+    } else {
+        debug!("record_sentence: Successfully recorded sentence");
+    }
+
+    result
 }
 
-fn prepare_recording(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(Sentence, Arc<Mutex<WavWriter<BufWriter<File>>>>, PathBuf), RecorderError> {
-  let state = state_arc.lock().unwrap();
-  let sentence = state.sentences[state.current_sentence_index].clone();
-  let project_dir = get_or_create_project_directory(&state.project_directory)?;
-  
-  debug!("Initializing writer for sentence: {}", sentence.id);
+fn prepare_recording(
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+) -> Result<(Sentence, Arc<Mutex<WavWriter<BufWriter<File>>>>, PathBuf), RecorderError> {
+    let state = state_arc.lock().unwrap();
+    let sentence = state.sentences[state.current_sentence_index].clone();
+    let project_dir = get_or_create_project_directory(&state.project_directory)?;
 
-  // Create WAV file path
-  let path = project_dir.join(format!("{}.wav", sentence.text.trim().replace(" ", "_")));
-  
-  // Create WAV writer
-  let spec = WavSpec {
+    debug!("Initializing writer for sentence: {}", sentence.id);
+
+    // Create WAV file path
+    let path = project_dir.join(format!("{}.wav", sentence.text.trim().replace(" ", "_")));
+
+    // Create WAV writer
+    let spec = WavSpec {
         channels: state.audio_config.config.channels() as u16,
         sample_rate: state.audio_config.sample_rate as u32,
         bits_per_sample: 16,
         sample_format: HoundSampleFormat::Int,
-  };
+    };
 
-  // Add trace logs for audio configuration
-  trace!("Audio configuration:");
-  trace!("  Channels: {}", spec.channels);
-  trace!("  Sample rate: {} Hz", spec.sample_rate);
-  trace!("  Bits per sample: {}", spec.bits_per_sample);
-  trace!("  Sample format: {:?}", spec.sample_format);
-  trace!("  Device: {:?}", state.audio_config.device.0.name());
+    // Add trace logs for audio configuration
+    trace!("Audio configuration:");
+    trace!("  Channels: {}", spec.channels);
+    trace!("  Sample rate: {} Hz", spec.sample_rate);
+    trace!("  Bits per sample: {}", spec.bits_per_sample);
+    trace!("  Sample format: {:?}", spec.sample_format);
+    trace!("  Device: {:?}", state.audio_config.device.0.name());
 
-  let writer = Arc::new(Mutex::new(WavWriter::create(&path, spec)?));
-  
-  Ok((sentence, writer, path))
+    let writer = Arc::new(Mutex::new(WavWriter::create(&path, spec)?));
+
+    Ok((sentence, writer, path))
 }
 
-fn initialize_recording_buffers() -> (Arc<Mutex<Vec<AudioChunkWithVAD>>>, Sender<()>, Receiver<()>) {
-  let audio_chunks: Arc<Mutex<Vec<AudioChunkWithVAD>>> = Arc::new(Mutex::new(Vec::new()));
-  let (voice_tx, voice_rx) = bounded(1);
-  (audio_chunks, voice_tx, voice_rx)
+fn initialize_recording_buffers() -> (Arc<Mutex<Vec<AudioChunkWithVAD>>>, Sender<()>, Receiver<()>)
+{
+    let audio_chunks: Arc<Mutex<Vec<AudioChunkWithVAD>>> = Arc::new(Mutex::new(Vec::new()));
+    let (voice_tx, voice_rx) = bounded(1);
+    (audio_chunks, voice_tx, voice_rx)
 }
 
-fn wait_for_audio_event(state_arc: &Arc<Mutex<AutoRecordState>>, event: AudioEvent, voice_rx: &Receiver<()>) -> Result<(), RecorderError> {
-  debug!("Waiting for audio event: {:?}", event);
-  loop {
-      check_recording_state(state_arc)?;
-      
-      match event {
-          AudioEvent::Voice => {
-              if voice_rx.try_recv().is_ok() {
-                  trace!("Voice detected");
-                  break;
-              }
-          },
-          AudioEvent::Silence => {
-              let state = state_arc.lock().unwrap();
-              let last_active = *state.last_active_time.lock().unwrap();
-              let elapsed = last_active.elapsed();
-              
-              if elapsed >= state.silence_duration {
-                  trace!("Silence detected");
-                  break;
-              }
-          }
-      }
-      
-      std::thread::sleep(Duration::from_millis(100));
-  }
-  debug!("Finished waiting for audio event: {:?}", event);
-  Ok(())
+fn wait_for_audio_event(
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+    event: AudioEvent,
+    voice_rx: &Receiver<()>,
+) -> Result<(), RecorderError> {
+    debug!("Waiting for audio event: {:?}", event);
+    loop {
+        check_recording_state(state_arc)?;
+
+        match event {
+            AudioEvent::Voice => {
+                if voice_rx.try_recv().is_ok() {
+                    trace!("Voice detected");
+                    break;
+                }
+            }
+            AudioEvent::Silence => {
+                let state = state_arc.lock().unwrap();
+                let last_active = *state.last_active_time.lock().unwrap();
+                let elapsed = last_active.elapsed();
+
+                if elapsed >= state.silence_duration {
+                    trace!("Silence detected");
+                    break;
+                }
+            }
+        }
+
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    debug!("Finished waiting for audio event: {:?}", event);
+    Ok(())
 }
 
 fn check_recording_state(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
-  let state = state_arc.lock().unwrap();
-  match state.state {
-      RecordingState::Paused => Err(RecorderError::RecordingPaused),
-      RecordingState::Idle => Err(RecorderError::RecordingStopped),
-      RecordingState::Recording => Ok(()),
-  }
+    let state = state_arc.lock().unwrap();
+    match state.state {
+        RecordingState::Paused => Err(RecorderError::RecordingPaused),
+        RecordingState::Idle => Err(RecorderError::RecordingStopped),
+        RecordingState::Recording => Ok(()),
+    }
 }
 
 /// Builds the audio input stream with VAD (Voice Activity Detection).
@@ -153,13 +161,13 @@ fn build_audio_stream(
         let state = state_arc.lock().unwrap();
         state.audio_config.sample_rate
     };
-    
+
     let chunk_size = get_chunk_size(sample_rate)?;
     let mut vad = VoiceActivityDetector::builder()
         .sample_rate(sample_rate as i64)
         .chunk_size(chunk_size)
         .build()
-        .expect("Failed to build VAD");    
+        .expect("Failed to build VAD");
 
     match sample_format {
         SampleFormat::I16 => {
@@ -185,13 +193,16 @@ fn build_audio_stream(
             };
 
             let state = state_arc.lock().unwrap();
-            trace!("Building input stream with config: {:?}", state.audio_config.config.config());
-            state.audio_config.device.0.build_input_stream(
-                &state.audio_config.config.config(),
-                input_data_fn,
-                err_fn,
-            )
-            .map_err(RecorderError::CpalBuildStreamError)
+            trace!(
+                "Building input stream with config: {:?}",
+                state.audio_config.config.config()
+            );
+            state
+                .audio_config
+                .device
+                .0
+                .build_input_stream(&state.audio_config.config.config(), input_data_fn, err_fn)
+                .map_err(RecorderError::CpalBuildStreamError)
         }
         SampleFormat::F32 => {
             let input_data_fn = {
@@ -220,13 +231,16 @@ fn build_audio_stream(
             };
 
             let state = state_arc.lock().unwrap();
-            trace!("Building input stream with config: {:?}", state.audio_config.config.config());
-            state.audio_config.device.0.build_input_stream(
-                &state.audio_config.config.config(),
-                input_data_fn,
-                err_fn,
-            )
-            .map_err(RecorderError::CpalBuildStreamError)
+            trace!(
+                "Building input stream with config: {:?}",
+                state.audio_config.config.config()
+            );
+            state
+                .audio_config
+                .device
+                .0
+                .build_input_stream(&state.audio_config.config.config(), input_data_fn, err_fn)
+                .map_err(RecorderError::CpalBuildStreamError)
         }
         _ => Err(RecorderError::Other("Unsupported sample format".into())),
     }
@@ -250,7 +264,7 @@ fn process_audio_chunk(
     chunk_size: usize,
 ) {
     let mut remaining_data = data;
-    
+
     while !remaining_data.is_empty() {
         let (chunk, rest) = if remaining_data.len() >= chunk_size {
             remaining_data.split_at(chunk_size)
@@ -324,7 +338,11 @@ fn handle_silence_detected(
         state.silence_duration
     };
 
-    trace!("Silence detected, elapsed: {}, silence_duration: {}", elapsed.as_millis(), silence_duration.as_millis());
+    trace!(
+        "Silence detected, elapsed: {}, silence_duration: {}",
+        elapsed.as_millis(),
+        silence_duration.as_millis()
+    );
 
     if elapsed >= silence_duration {
         let state = state_arc.lock().unwrap();
@@ -351,14 +369,24 @@ fn write_trimmed_audio(
     let padding_samples = (silence_padding.as_secs_f32() * sample_rate as f32) as usize;
     let chunk_size = get_chunk_size(sample_rate).unwrap();
     let chunks = audio_chunks.lock().unwrap();
-    
-    let start_index = chunks.iter().position(|chunk| chunk.is_voice).unwrap_or(0).saturating_sub(1);
-    let end_index = chunks.iter().rposition(|chunk| chunk.is_voice).unwrap_or(chunks.len() - 1) + 1;
+
+    let start_index = chunks
+        .iter()
+        .position(|chunk| chunk.is_voice)
+        .unwrap_or(0)
+        .saturating_sub(1);
+    let end_index = chunks
+        .iter()
+        .rposition(|chunk| chunk.is_voice)
+        .unwrap_or(chunks.len() - 1)
+        + 1;
 
     let mut writer = writer.lock().unwrap();
-    
+
     // Write padding before speech
-    for chunk in chunks[start_index.saturating_sub(padding_samples / chunk_size)..start_index].iter() {
+    for chunk in
+        chunks[start_index.saturating_sub(padding_samples / chunk_size)..start_index].iter()
+    {
         for &sample in &chunk.chunk {
             writer.write_sample(sample).unwrap();
         }
@@ -381,14 +409,17 @@ fn write_trimmed_audio(
 
 /// Creates or gets the project directory based on the provided path.
 fn get_or_create_project_directory(
-  project_directory: &str,
+    project_directory: &str,
 ) -> Result<std::path::PathBuf, RecorderError> {
-  debug!("Getting or creating project directory: {}", project_directory);
-  let project_dir = tauri::api::path::home_dir()
-      .map(|home| home.join(project_directory))
-      .unwrap_or_else(|| std::path::PathBuf::from(project_directory));
+    debug!(
+        "Getting or creating project directory: {}",
+        project_directory
+    );
+    let project_dir = tauri::api::path::home_dir()
+        .map(|home| home.join(project_directory))
+        .unwrap_or_else(|| std::path::PathBuf::from(project_directory));
 
-  std::fs::create_dir_all(&project_dir)?;
+    std::fs::create_dir_all(&project_dir)?;
 
-  Ok(project_dir)
+    Ok(project_dir)
 }

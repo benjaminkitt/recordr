@@ -1,9 +1,9 @@
-use std::sync::{Arc, Mutex};
-use tauri::State;
-use crate::models::Sentence;
 use super::recorder::Recorder;
+use crate::models::Sentence;
 use std::fs::File;
 use std::io::Read;
+use std::sync::{Arc, Mutex};
+use tauri::State;
 
 /// Starts a standard recording and writes to a WAV file.
 #[tauri::command]
@@ -38,15 +38,16 @@ pub fn start_auto_record(
     let recorder_state = Arc::clone(state.inner());
     {
         let mut recorder = recorder_state.lock().unwrap();
-        recorder.start_auto_record(
-            sentences.clone(),
-            project_directory.clone(),
-            silence_threshold,
-            silence_duration,
-            silence_padding,
-            window.clone(),
-        )
-        .map_err(|e| e.to_string())?;
+        recorder
+            .start_auto_record(
+                sentences.clone(),
+                project_directory.clone(),
+                silence_threshold,
+                silence_duration,
+                silence_padding,
+                window.clone(),
+            )
+            .map_err(|e| e.to_string())?;
     }
 
     Ok(())
