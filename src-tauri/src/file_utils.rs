@@ -1,14 +1,14 @@
-use crate::models::Sentence;
-use csv::ReaderBuilder;
-use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
+use std::ffi::OsStr;
+use csv::ReaderBuilder;
+use crate::models::Sentence;
 
 #[tauri::command]
 pub async fn import_sentences(file_path: &str, project_dir: &str) -> Result<Vec<Sentence>, String> {
     // 1. Read the file contents
-    let file_contents =
-        fs::read_to_string(file_path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let file_contents = fs::read_to_string(file_path)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
 
     // 2. Parse the sentences based on file extension
     let sentences = match Path::new(file_path).extension().and_then(OsStr::to_str) {
@@ -20,22 +20,22 @@ pub async fn import_sentences(file_path: &str, project_dir: &str) -> Result<Vec<
 
     // 3. Construct the full audio file path for each sentence
     let sentences_with_paths: Vec<Sentence> = sentences
-        .into_iter()
-        .enumerate()
-        .map(|(index, sentence)| {
-            let audio_file_name = format!("{}.wav", sentence.text);
-            let audio_file_path = Path::new(project_dir)
-                .join(audio_file_name)
-                .to_string_lossy()
-                .to_string();
-            Sentence {
-                id: (index + 1),
-                text: sentence.text,
-                recorded: false,
-                audio_file_path: Some(audio_file_path),
-            }
-        })
-        .collect();
+    .into_iter()
+    .enumerate()
+    .map(|(index, sentence)| {
+        let audio_file_name = format!("{}.wav", sentence.text);
+        let audio_file_path = Path::new(project_dir)
+            .join(audio_file_name)
+            .to_string_lossy()
+            .to_string();
+        Sentence {
+            id: (index + 1),
+            text: sentence.text,
+            recorded: false,
+            audio_file_path: Some(audio_file_path),
+        }
+    })
+    .collect();
 
     Ok(sentences_with_paths)
 }
@@ -79,15 +79,12 @@ fn parse_delimited(file_contents: &str, delimiter: u8) -> Result<Vec<Sentence>, 
 pub fn create_new_project(parent_dir: &str, project_name: &str) -> Result<bool, String> {
     let project_path = Path::new(parent_dir).join(project_name);
     fs::create_dir_all(&project_path).map_err(|e| e.to_string())?;
-
+    
     let json_path = project_path.join(format!("{}.json", project_name));
     let initial_data = serde_json::json!({ "sentences": [] });
-    fs::write(
-        json_path,
-        serde_json::to_string_pretty(&initial_data).unwrap(),
-    )
-    .map_err(|e| e.to_string())?;
-
+    fs::write(json_path, serde_json::to_string_pretty(&initial_data).unwrap())
+        .map_err(|e| e.to_string())?;
+    
     Ok(true)
 }
 
@@ -95,8 +92,7 @@ pub fn create_new_project(parent_dir: &str, project_name: &str) -> Result<bool, 
 pub fn open_project(file_path: &str) -> Result<Vec<Sentence>, String> {
     let content = fs::read_to_string(file_path).map_err(|e| e.to_string())?;
     let data: serde_json::Value = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-    let sentences: Vec<Sentence> =
-        serde_json::from_value(data["sentences"].clone()).map_err(|e| e.to_string())?;
+    let sentences: Vec<Sentence> = serde_json::from_value(data["sentences"].clone()).map_err(|e| e.to_string())?;
     Ok(sentences)
 }
 

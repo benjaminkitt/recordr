@@ -5,29 +5,33 @@
     isRecording,
     isProjectLoaded,
     projectDirectory,
-  } from '../stores/projectStore';
-  import { playSentence, toggleRecording } from '../utils/fileUtils';
-  import type { Sentence, AutoRecordFinishSentenceEvent } from '../types';
-  import {
+  } from "../stores/projectStore";
+  import { playSentence, toggleRecording } from "../utils/fileUtils";
+  import type {
+    Sentence,
+    AutoRecordStartSentenceEvent,
+    AutoRecordFinishSentenceEvent,
+  } from "../types";
+  import { 
     startAutoRecord as autoRecord,
     stopAutoRecord,
     pauseAutoRecord,
-    resumeAutoRecord,
-  } from '../utils/autoRecord';
-  import { saveProject } from '../utils/fileUtils';
-  import { onMount, afterUpdate } from 'svelte';
-  import { get } from 'svelte/store';
-  import { listen } from '@tauri-apps/api/event';
-  import { RangeSlider } from '@skeletonlabs/skeleton';
-  import MdiRemoveBox from '~icons/mdi/remove-box';
+    resumeAutoRecord,  
+  } from "../utils/autoRecord";
+  import { saveProject } from "../utils/fileUtils";
+  import { onMount, afterUpdate } from "svelte";
+  import { get } from "svelte/store";
+  import { listen } from "@tauri-apps/api/event";
+  import { RangeSlider } from "@skeletonlabs/skeleton";
+  import MdiRemoveBox from "~icons/mdi/remove-box";
   import MdiPlus from '~icons/mdi/plus';
   import MdiRecordRec from '~icons/mdi/record-rec';
   import MdiStop from '~icons/mdi/stop';
   import MdiPlayPause from '~icons/mdi/play-pause';
   import MdiPause from '~icons/mdi/pause';
   import MdiPlay from '~icons/mdi/play';
-  import { popup } from '@skeletonlabs/skeleton';
-  import type { PopupSettings } from '@skeletonlabs/skeleton';
+  import { popup } from "@skeletonlabs/skeleton";
+  import type { PopupSettings } from "@skeletonlabs/skeleton";
   import { appWindow } from '@tauri-apps/api/window';
 
   let silenceThreshold = 0.5;
@@ -46,7 +50,7 @@
     const projectDir = get(projectDirectory);
 
     if (!projectDir) {
-      console.error('Project directory is not set');
+      console.error("Project directory is not set");
       isAutoRecording = false;
       return;
     }
@@ -61,7 +65,7 @@
         appWindow as unknown as Window
       );
     } catch (error) {
-      console.error('Error starting auto-record:', error);
+      console.error("Error starting auto-record:", error);
       isAutoRecording = false;
     }
   }
@@ -88,25 +92,30 @@
   }
 
   onMount(() => {
-    const unlistenStart = listen('auto-record-start-sentence', (event: { payload: number }) => {
-      currentRecordingId = event.payload;
-      scrollToCurrentSentence();
-    });
+    const unlistenStart = listen(
+      "auto-record-start-sentence",
+      (event: { payload: number }) => {
+        currentRecordingId = event.payload;
+        scrollToCurrentSentence();
+      },
+    );
 
     const unlistenFinish = listen(
-      'auto-record-finish-sentence',
+      "auto-record-finish-sentence",
       (event: AutoRecordFinishSentenceEvent) => {
-        const sentenceIndex = $sentences.findIndex((s) => s.id === event.payload.id);
+        const sentenceIndex = $sentences.findIndex(
+          (s) => s.id === event.payload.id
+        );
         if (sentenceIndex !== -1) {
           $sentences[sentenceIndex].recorded = true;
           $sentences[sentenceIndex].audioFilePath = event.payload.audioFilePath;
           saveProject(); // Add this function to auto-save the project
         }
         currentRecordingId = null;
-      }
+      },
     );
 
-    const unlistenComplete = listen('auto-record-complete', () => {
+    const unlistenComplete = listen("auto-record-complete", () => {
       isAutoRecording = false;
       currentRecordingId = null;
     });
@@ -120,25 +129,20 @@
 
   function scrollToCurrentSentence() {
     if (currentRecordingId !== null && sentenceListContainer) {
-      const currentSentenceElement = sentenceListContainer.querySelector(
-        `[data-sentence-id="${currentRecordingId}"]`
-      ) as HTMLElement;
+      const currentSentenceElement = sentenceListContainer.querySelector(`[data-sentence-id="${currentRecordingId}"]`) as HTMLElement;
       if (currentSentenceElement) {
         const containerRect = sentenceListContainer.getBoundingClientRect();
         const elementRect = currentSentenceElement.getBoundingClientRect();
-
+        
         const containerScrollTop = sentenceListContainer.scrollTop;
         const elementRelativeTop = elementRect.top - containerRect.top + containerScrollTop;
-
-        let scrollOffset = elementRelativeTop - containerRect.height / 2 + elementRect.height / 2;
-        scrollOffset = Math.max(
-          0,
-          Math.min(scrollOffset, sentenceListContainer.scrollHeight - containerRect.height)
-        );
-
+        
+        let scrollOffset = elementRelativeTop - (containerRect.height / 2) + (elementRect.height / 2);
+        scrollOffset = Math.max(0, Math.min(scrollOffset, sentenceListContainer.scrollHeight - containerRect.height));
+        
         sentenceListContainer.scrollTo({
           top: scrollOffset,
-          behavior: 'smooth',
+          behavior: 'smooth'
         });
       }
     }
@@ -148,7 +152,7 @@
     scrollToCurrentSentence();
   });
 
-  let newSentence = '';
+  let newSentence = "";
 
   function addSentence() {
     if (!$isProjectLoaded || $isRecording || isAutoRecording) {
@@ -158,12 +162,15 @@
     if (trimmedSentence.length === 0) {
       return; // Don't add empty sentences
     } else if ($sentences.some((s) => s.text === trimmedSentence)) {
-      alert('This sentence is already in the list.');
+      alert("This sentence is already in the list.");
     } else {
       const newId = Math.max(0, ...$sentences.map((s) => s.id)) + 1;
-      $sentences = [...$sentences, { id: newId, text: trimmedSentence, recorded: false }];
+      $sentences = [
+        ...$sentences,
+        { id: newId, text: trimmedSentence, recorded: false },
+      ];
       saveProject(); // Add this function to auto-save the project
-      newSentence = '';
+      newSentence = "";
     }
   }
 
@@ -177,19 +184,19 @@
     if ($isRecording || isAutoRecording) {
       return; // Don't allow removal while recording
     }
-    if (confirm('Are you sure you want to remove this sentence?')) {
+    if (confirm("Are you sure you want to remove this sentence?")) {
       $sentences = $sentences.filter((_, i) => i !== index);
     }
   }
-
+  
   function selectSentence(sentence: Sentence) {
     selectedSentence.set(sentence);
   }
 
   const removePopupHover: PopupSettings = {
-    event: 'hover',
-    target: 'removePopupHover',
-    placement: 'top',
+    event: "hover",
+    target: "removePopupHover",
+    placement: "top",
   };
 </script>
 
@@ -262,10 +269,7 @@
     <button
       class="btn variant-filled shrink-0 inline-flex justify-center items-center gap-x-2"
       on:click={addSentence}
-      disabled={!$isProjectLoaded ||
-        $isRecording ||
-        isAutoRecording ||
-        newSentence.trim().length === 0}
+      disabled={!$isProjectLoaded || $isRecording || isAutoRecording || newSentence.trim().length === 0}
     >
       <MdiPlus />
       <span class="ml-2">Add Sentence</span>
@@ -280,22 +284,25 @@
         <div
           role="button"
           tabindex="0"
-          data-sentence-id={sentence.id}
+          data-sentence-id="{sentence.id}"
           class="p-2 mb-2 rounded-container-token
-            {sentence.id === currentRecordingId
-            ? 'bg-secondary-500 animate-pulse'
-            : $selectedSentence === sentence
-              ? 'bg-primary-500'
-              : 'bg-surface-200-700-token'}"
+            {sentence.id === currentRecordingId 
+              ? 'bg-secondary-500 animate-pulse' 
+              : $selectedSentence === sentence 
+                ? 'bg-primary-500' 
+                : 'bg-surface-200-700-token'}"
           on:click={() => selectSentence(sentence)}
-          on:keydown={(e) => e.key === 'Enter' && selectSentence(sentence)}
+          on:keydown={(e) => e.key === "Enter" && selectSentence(sentence)}
         >
           <div class="flex justify-between items-center">
             <span>{sentence.text}</span>
             <div class="flex items-center gap-2">
               {#if sentence.recorded}
                 <span class="badge variant-filled-success">Recorded</span>
-                <button class="btn btn-sm variant-ghost" on:click={() => playSentence(sentence)}>
+                <button
+                  class="btn btn-sm variant-ghost"
+                  on:click={() => playSentence(sentence)}
+                >
                   <MdiPlay />
                 </button>
               {/if}
@@ -307,7 +314,10 @@
               >
                 <MdiRemoveBox />
               </button>
-              <div class="card p-4 variant-filled-secondary" data-popup="removePopupHover">
+              <div
+                class="card p-4 variant-filled-secondary"
+                data-popup="removePopupHover"
+              >
                 <p>Delete</p>
                 <div class="arrow variant-filled-secondary" />
               </div>
@@ -349,7 +359,10 @@
       {/if}
     </button>
     {#if isAutoRecording}
-      <button class="btn variant-filled" on:click={togglePauseResume}>
+      <button
+        class="btn variant-filled"
+        on:click={togglePauseResume}
+      >
         {#if isPaused}
           <MdiPlay />
           <span class="ml-2">Resume Auto-Record</span>
@@ -362,9 +375,7 @@
   </div>
   {#if isAutoRecording}
     <p class="mt-2">
-      {isPaused
-        ? 'Auto-recording paused'
-        : `Recording sentence ${currentSentenceIndex + 1} of ${$sentences.length}`}
+      {isPaused ? "Auto-recording paused" : `Recording sentence ${currentSentenceIndex + 1} of ${$sentences.length}`}
     </p>
   {/if}
 </div>

@@ -1,23 +1,28 @@
-use log::info;
-use std::sync::{Arc, Mutex};
 use tauri::{generate_context, generate_handler};
+use std::sync::{Arc, Mutex};
+use log::info;
 
 mod audio;
 mod file_utils;
 mod models;
 
 use audio::{
-    load_audio_file,
+    start_recording,
+    stop_recording,
+    start_auto_record,
+    stop_auto_record,
     pause_auto_record,
     resume_auto_record,
-    start_auto_record,
-    start_recording,
-    stop_auto_record,
-    stop_recording,
+    load_audio_file,
     Recorder, // Import the Recorder struct
 };
 
-use file_utils::{create_new_project, import_sentences, open_project, save_project};
+use file_utils::{
+    import_sentences,
+    create_new_project,
+    open_project,
+    save_project,
+};
 
 fn main() {
     // Initialize the logger
@@ -25,8 +30,7 @@ fn main() {
 
     info!("Starting the application");
 
-    // Initialize the Recorder instance inside an Arc and Mutex for shared state
-    // management
+    // Initialize the Recorder instance inside an Arc and Mutex for shared state management
     let recorder = Arc::new(Mutex::new(Recorder::new()));
 
     tauri::Builder::default()

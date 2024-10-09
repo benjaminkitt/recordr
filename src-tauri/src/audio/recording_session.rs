@@ -1,5 +1,3 @@
-use super::auto_record::AutoRecordState;
-use super::config::RecordingState;
 use cpal::Stream;
 use hound::WavWriter;
 use log::{debug, error};
@@ -8,6 +6,8 @@ use std::io::BufWriter;
 use std::ops::Drop;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use super::config::RecordingState;
+use super::auto_record::AutoRecordState;
 
 pub struct RecordingSession {
     pub stream: Option<Stream>,
