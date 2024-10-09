@@ -31,3 +31,8 @@ pub enum RecordingState {
     Recording,
     Paused,
 }
+
+pub struct AudioChunkWithVAD {
+  pub chunk: Vec<i16>,
+  pub is_voice: bool,
+}

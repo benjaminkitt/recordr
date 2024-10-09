@@ -5,15 +5,14 @@ use hound::{WavSpec, WavWriter, SampleFormat as HoundSampleFormat};
 use log::{debug, trace, error};
 use std::fs::File;
 use std::io::BufWriter;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
-use voice_activity_detector::{VoiceActivityDetector, IteratorExt};
-use webrtc_vad::{SampleRate, Vad, VadMode};
+use voice_activity_detector::VoiceActivityDetector;
 use crossbeam_channel::{bounded, Receiver, Sender};
 use crate::models::Sentence;
 use super::auto_record::AutoRecordState;
-use super::config::{AudioEvent, RecordingState};
+use super::config::{AudioEvent, RecordingState, AudioChunkWithVAD};
 use super::errors::RecorderError;
 use super::recording_session::RecordingSession;
 
@@ -23,11 +22,11 @@ type AudioStream = Result<Stream, RecorderError>;
 pub fn record_sentence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
   debug!("record_sentence: Starting to record sentence");
   let (sentence, writer, path) = prepare_recording(state_arc)?;
-  let (active_buffer, voice_tx, voice_rx) = initialize_recording_buffers();
+  let (audio_chunks, voice_tx, voice_rx) = initialize_recording_buffers();
 
   debug!("record_sentence: Recording sentence: {} ({})", sentence.id, sentence.text);
 
-  let stream = build_audio_stream(state_arc, writer.clone(), active_buffer.clone(), voice_tx)?;
+  let stream = build_audio_stream(state_arc, writer.clone(), audio_chunks.clone(), voice_tx)?;
   
   let session = RecordingSession {
       stream: Some(stream),
@@ -69,10 +68,10 @@ fn prepare_recording(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(Sentenc
   
   // Create WAV writer
   let spec = WavSpec {
-      channels: state.audio_config.config.channels() as u16,
-      sample_rate: state.audio_config.sample_rate as u32,
-      bits_per_sample: 16,
-      sample_format: HoundSampleFormat::Int,
+        channels: state.audio_config.config.channels() as u16,
+        sample_rate: state.audio_config.sample_rate as u32,
+        bits_per_sample: 16,
+        sample_format: HoundSampleFormat::Int,
   };
 
   // Add trace logs for audio configuration
@@ -88,10 +87,10 @@ fn prepare_recording(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(Sentenc
   Ok((sentence, writer, path))
 }
 
-fn initialize_recording_buffers() -> (Arc<Mutex<Vec<i16>>>, Sender<()>, Receiver<()>) {
-  let active_buffer = Arc::new(Mutex::new(Vec::new()));
+fn initialize_recording_buffers() -> (Arc<Mutex<Vec<AudioChunkWithVAD>>>, Sender<()>, Receiver<()>) {
+  let audio_chunks: Arc<Mutex<Vec<AudioChunkWithVAD>>> = Arc::new(Mutex::new(Vec::new()));
   let (voice_tx, voice_rx) = bounded(1);
-  (active_buffer, voice_tx, voice_rx)
+  (audio_chunks, voice_tx, voice_rx)
 }
 
 fn wait_for_audio_event(state_arc: &Arc<Mutex<AutoRecordState>>, event: AudioEvent, voice_rx: &Receiver<()>) -> Result<(), RecorderError> {
@@ -137,7 +136,7 @@ fn check_recording_state(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), 
 fn build_audio_stream(
     state_arc: &Arc<Mutex<AutoRecordState>>,
     writer: Arc<Mutex<WavWriter<BufWriter<File>>>>,
-    active_buffer: Arc<Mutex<Vec<i16>>>,
+    audio_chunks: Arc<Mutex<Vec<AudioChunkWithVAD>>>,
     voice_tx: Sender<()>,
 ) -> AudioStream {
     debug!("Building audio stream");
@@ -150,18 +149,24 @@ fn build_audio_stream(
 
     let err_fn = |err| eprintln!("Stream error: {}", err);
 
+    let sample_rate = {
+        let state = state_arc.lock().unwrap();
+        state.audio_config.sample_rate
+    };
+    
+    let chunk_size = get_chunk_size(sample_rate)?;
     let mut vad = VoiceActivityDetector::builder()
-        .sample_rate(16000)
-        .chunk_size(512usize)
+        .sample_rate(sample_rate as i64)
+        .chunk_size(chunk_size)
         .build()
-        .expect("Failed to build VAD");
+        .expect("Failed to build VAD");    
 
     match sample_format {
         SampleFormat::I16 => {
             let input_data_fn = {
                 let state_arc = Arc::clone(state_arc);
                 let writer = Arc::clone(&writer);
-                let active_buffer = Arc::clone(&active_buffer);
+                let audio_chunks = Arc::clone(&audio_chunks);
                 let voice_tx = voice_tx.clone();
 
                 move |data: &[i16], _: &cpal::InputCallbackInfo| {
@@ -171,9 +176,10 @@ fn build_audio_stream(
                         data,
                         &mut vad,
                         &state_arc,
-                        &active_buffer,
+                        &audio_chunks,
                         &writer,
                         &voice_tx,
+                        chunk_size,
                     );
                 }
             };
@@ -191,7 +197,7 @@ fn build_audio_stream(
             let input_data_fn = {
                 let state_arc = Arc::clone(state_arc);
                 let writer = Arc::clone(&writer);
-                let active_buffer = Arc::clone(&active_buffer);
+                let audio_chunks = Arc::clone(&audio_chunks);
                 let voice_tx = voice_tx.clone();
 
                 move |data: &[f32], _: &cpal::InputCallbackInfo| {
@@ -205,9 +211,10 @@ fn build_audio_stream(
                         &data_i16,
                         &mut vad,
                         &state_arc,
-                        &active_buffer,
+                        &audio_chunks,
                         &writer,
                         &voice_tx,
+                        chunk_size,
                     );
                 }
             };
@@ -223,28 +230,44 @@ fn build_audio_stream(
         }
         _ => Err(RecorderError::Other("Unsupported sample format".into())),
     }
-} 
+}
+
+fn get_chunk_size(sample_rate: usize) -> Result<usize, RecorderError> {
+    let chunk_size = (sample_rate as f32 / 31.25).round() as usize;
+    // Ensure chunk_size is a multiple of 256 for compatibility
+    let chunk_size = ((chunk_size + 255) / 256) * 256;
+    Ok(chunk_size)
+}
 
 /// Processes an audio chunk using VAD, updating state and writing data when speech is detected.
 fn process_audio_chunk(
     data: &[i16],
     vad: &mut VoiceActivityDetector,
     state_arc: &Arc<Mutex<AutoRecordState>>,
-    active_buffer: &Arc<Mutex<Vec<i16>>>,
+    audio_chunks: &Arc<Mutex<Vec<AudioChunkWithVAD>>>,
     writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
     voice_tx: &Sender<()>,
+    chunk_size: usize,
 ) {
-    let chunk_size = 512;
-
-    for chunk in data.chunks(chunk_size) {
-        trace!("Chunk length: {}, Chunk size: {}", chunk.len(), chunk_size);
-        if chunk.len() < chunk_size {
-            trace!("Chunk too short, skipping");
-            continue;
-        }
+    let mut remaining_data = data;
+    
+    while !remaining_data.is_empty() {
+        let (chunk, rest) = if remaining_data.len() >= chunk_size {
+            remaining_data.split_at(chunk_size)
+        } else {
+            (remaining_data, &[][..])
+        };
 
         let probability = vad.predict(chunk.to_vec());
-        let is_voice = probability >= 0.5; // You can adjust this threshold
+        let is_voice = probability >= 0.5;
+
+        {
+            let mut chunks = audio_chunks.lock().unwrap();
+            chunks.push(AudioChunkWithVAD {
+                chunk: chunk.to_vec(),
+                is_voice,
+            });
+        }
 
         let elapsed = {
             let state = state_arc.lock().unwrap();
@@ -261,106 +284,99 @@ fn process_audio_chunk(
         trace!("Processing audio chunk: voice_probability: {}, is_voice: {}, speaking: {}, elapsed: {}", probability, is_voice, speaking, elapsed.as_millis());
 
         if is_voice {
-            handle_voice_detected(state_arc, active_buffer, chunk, elapsed, voice_tx);
-        } else if speaking {
-            handle_silence_detected(state_arc, active_buffer, writer, chunk, elapsed);
+            handle_voice_detected(state_arc, elapsed, voice_tx);
+        } else {
+            handle_silence_detected(state_arc, audio_chunks, writer, elapsed);
         }
+
+        remaining_data = rest;
     }
 }
 
 fn handle_voice_detected(
-  state_arc: &Arc<Mutex<AutoRecordState>>,
-  active_buffer: &Arc<Mutex<Vec<i16>>>,
-  chunk: &[i16],
-  elapsed: Duration,
-  voice_tx: &Sender<()>,
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+    elapsed: Duration,
+    voice_tx: &Sender<()>,
 ) {
-  // Voice detected, reset last active time
-  {
-      let state = state_arc.lock().unwrap();
-      *state.last_active_time.lock().unwrap() = Instant::now();
-  }
+    {
+        let state = state_arc.lock().unwrap();
+        *state.last_active_time.lock().unwrap() = Instant::now();
+    }
 
-  if elapsed >= Duration::from_millis(200) {
-      trace!("Voice detected, notifying voice_tx");
-      // Set speaking to true and send voice signal
-      {
-          let state = state_arc.lock().unwrap();
-          *state.is_speaking.lock().unwrap() = true;
-      }
-      let _ = voice_tx.try_send(());
-  }
-
-  trace!("Extending active buffer with chunk");
-  let mut buffer = active_buffer.lock().unwrap();
-  buffer.extend_from_slice(chunk);
+    if elapsed >= Duration::from_millis(200) {
+        trace!("Voice detected, notifying voice_tx");
+        {
+            let state = state_arc.lock().unwrap();
+            *state.is_speaking.lock().unwrap() = true;
+        }
+        let _ = voice_tx.try_send(());
+    }
 }
 
 fn handle_silence_detected(
-  state_arc: &Arc<Mutex<AutoRecordState>>,
-  active_buffer: &Arc<Mutex<Vec<i16>>>,
-  writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
-  chunk: &[i16],
-  elapsed: Duration,
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+    audio_chunks: &Arc<Mutex<Vec<AudioChunkWithVAD>>>,
+    writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
+    elapsed: Duration,
 ) {
-  let silence_duration = {
-      let state = state_arc.lock().unwrap();
-      state.silence_duration
-  };
+    let silence_duration = {
+        let state = state_arc.lock().unwrap();
+        state.silence_duration
+    };
 
-  trace!("Silence detected, elapsed: {}, silence_duration: {}", elapsed.as_millis(), silence_duration.as_millis());
-  if elapsed >= silence_duration {
-      // Silence duration reached, stop speaking and write trimmed audio
-      trace!("Silence duration reached, stopping speaking and writing trimmed audio");
-      {
-          let state = state_arc.lock().unwrap();
-          *state.is_speaking.lock().unwrap() = false;
-      }
+    trace!("Silence detected, elapsed: {}, silence_duration: {}", elapsed.as_millis(), silence_duration.as_millis());
 
-      write_trimmed_audio(state_arc, active_buffer, writer);
-  } else {
-      trace!("Extending active buffer with chunk");
-      let mut buffer = active_buffer.lock().unwrap();
-      buffer.extend_from_slice(chunk);
-  }
+    if elapsed >= silence_duration {
+        let state = state_arc.lock().unwrap();
+        if *state.is_speaking.lock().unwrap() {
+            debug!("Silence duration reached, stopping speaking and writing trimmed audio");
+            *state.is_speaking.lock().unwrap() = false;
+            drop(state);
+            write_trimmed_audio(state_arc, audio_chunks, writer);
+            debug!("Finished writing trimmed audio");
+        }
+    }
 }
 
 fn write_trimmed_audio(
-  state_arc: &Arc<Mutex<AutoRecordState>>,
-  active_buffer: &Arc<Mutex<Vec<i16>>>,
-  writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
+    state_arc: &Arc<Mutex<AutoRecordState>>,
+    audio_chunks: &Arc<Mutex<Vec<AudioChunkWithVAD>>>,
+    writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
 ) {
-  let (silence_padding, sample_rate) = {
-      let state = state_arc.lock().unwrap();
-      (state.silence_padding, state.audio_config.sample_rate)
-  };
+    let (silence_padding, sample_rate) = {
+        let state = state_arc.lock().unwrap();
+        (state.silence_padding, state.audio_config.sample_rate)
+    };
 
-  let padding_samples = (silence_padding.as_secs_f32() * sample_rate as f32) as usize;
-  let mut buffer = active_buffer.lock().unwrap();
-  let end_index = buffer.len().saturating_sub(padding_samples);
-  let trimmed_audio = &buffer[..end_index];
+    let padding_samples = (silence_padding.as_secs_f32() * sample_rate as f32) as usize;
+    let chunk_size = get_chunk_size(sample_rate).unwrap();
+    let chunks = audio_chunks.lock().unwrap();
+    
+    let start_index = chunks.iter().position(|chunk| chunk.is_voice).unwrap_or(0).saturating_sub(1);
+    let end_index = chunks.iter().rposition(|chunk| chunk.is_voice).unwrap_or(chunks.len() - 1) + 1;
 
-  debug!("Writing trimmed audio to file");
-  let mut writer = writer.lock().unwrap();
-  for &sample in trimmed_audio {
-      writer.write_sample(sample).unwrap_or_else(|e| {
-          eprintln!("Failed to write sample: {}", e);
-      });
-  }
+    let mut writer = writer.lock().unwrap();
+    
+    // Write padding before speech
+    for chunk in chunks[start_index.saturating_sub(padding_samples / chunk_size)..start_index].iter() {
+        for &sample in &chunk.chunk {
+            writer.write_sample(sample).unwrap();
+        }
+    }
 
-  buffer.clear();
-}
+    // Write speech
+    for chunk in chunks[start_index..=end_index].iter() {
+        for &sample in &chunk.chunk {
+            writer.write_sample(sample).unwrap();
+        }
+    }
 
-
-/// Returns the frame length for the given sample rate, used in VAD.
-fn get_frame_length(sample_rate: usize) -> Result<usize, RecorderError> {
-  match sample_rate {
-      8000 => Ok(160),
-      16000 => Ok(320),
-      32000 => Ok(640),
-      48000 => Ok(960),
-      _ => Err(RecorderError::Other(format!("Unsupported sample rate: {}", sample_rate))),
-  }
+    // Write padding after speech
+    for chunk in chunks[end_index + 1..end_index + 1 + padding_samples / chunk_size].iter() {
+        for &sample in &chunk.chunk {
+            writer.write_sample(sample).unwrap();
+        }
+    }
 }
 
 /// Creates or gets the project directory based on the provided path.
