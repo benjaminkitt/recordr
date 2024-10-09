@@ -83,13 +83,13 @@ fn prepare_recording(
         sample_format: HoundSampleFormat::Int,
     };
 
-    // Add trace logs for audio configuration
-    trace!("Audio configuration:");
-    trace!("  Channels: {}", spec.channels);
-    trace!("  Sample rate: {} Hz", spec.sample_rate);
-    trace!("  Bits per sample: {}", spec.bits_per_sample);
-    trace!("  Sample format: {:?}", spec.sample_format);
-    trace!("  Device: {:?}", state.audio_config.device.0.name());
+    // Output a debug log of the audio configuration
+    debug!("Audio configuration:");
+    debug!("  Channels: {}", spec.channels);
+    debug!("  Sample rate: {} Hz", spec.sample_rate);
+    debug!("  Bits per sample: {}", spec.bits_per_sample);
+    debug!("  Sample format: {:?}", spec.sample_format);
+    debug!("  Device: {:?}", state.audio_config.device.0.name());
 
     let writer = Arc::new(Mutex::new(WavWriter::create(&path, spec)?));
 
@@ -103,6 +103,10 @@ fn initialize_recording_buffers() -> (Arc<Mutex<Vec<AudioChunkWithVAD>>>, Sender
     (audio_chunks, voice_tx, voice_rx)
 }
 
+/**
+ * This is the main loop that waits for audio events. When an event is
+ * received, a break allows the record_sentence function to continue.
+ */
 fn wait_for_audio_event(
     state_arc: &Arc<Mutex<AutoRecordState>>,
     event: AudioEvent,
@@ -146,7 +150,10 @@ fn check_recording_state(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), 
     }
 }
 
-/// Builds the audio input stream with VAD (Voice Activity Detection).
+/**
+ * Builds an audio input stream and configured the VAD that is used to
+ * detect speech.
+ */
 fn build_audio_stream(
     state_arc: &Arc<Mutex<AutoRecordState>>,
     writer: Arc<Mutex<WavWriter<BufWriter<File>>>>,
@@ -259,8 +266,11 @@ fn get_chunk_size(sample_rate: usize) -> Result<usize, RecorderError> {
     Ok(chunk_size)
 }
 
-/// Processes an audio chunk using VAD, updating state and writing data when
-/// speech is detected.
+/**
+ * Processes an audio chunk using VAD, calculating the probability of
+ * speech as well as keeping track of the elapsed time since silence was
+ * detected.
+ */
 fn process_audio_chunk(
     data: &[i16],
     vad: &mut VoiceActivityDetector,
@@ -377,6 +387,15 @@ fn write_trimmed_audio(
     let chunk_size = get_chunk_size(sample_rate).unwrap();
     let chunks = audio_chunks.lock().unwrap();
 
+    /**
+     * Finds the start and end indices of the speech portion within the
+     * audio chunks.
+     *
+     * The start index is the index of the first chunk that contains speech,
+     * minus one. The end index is the index of the last chunk that
+     * contains speech, plus one. This ensures that silence before and
+     * after speech is trimmed and replaced with the silence padding.
+     */
     let start_index = chunks
         .iter()
         .position(|chunk| chunk.is_voice)
@@ -414,7 +433,9 @@ fn write_trimmed_audio(
     }
 }
 
-/// Creates or gets the project directory based on the provided path.
+/**
+ * Creates or gets the project directory based on the provided path.
+ */
 fn get_or_create_project_directory(
     project_directory: &str,
 ) -> Result<std::path::PathBuf, RecorderError> {

@@ -41,6 +41,7 @@
           webrtc-audio-processing
           libclang
           rustup
+          nixd
         ];
       in
       {
@@ -84,3 +85,12 @@
       }
     );
 }
+
+{
+  inputs = {
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+  };
