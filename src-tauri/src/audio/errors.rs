@@ -21,9 +21,15 @@ impl fmt::Display for RecorderError {
             RecorderError::RecordingStopped => write!(f, "Recording stopped"),
             RecorderError::IoError(e) => write!(f, "I/O error: {}", e),
             RecorderError::CpalStreamError(e) => write!(f, "Audio stream error: {}", e),
-            RecorderError::CpalBuildStreamError(e) => write!(f, "Failed to build audio stream: {}", e),
-            RecorderError::CpalPlayStreamError(e) => write!(f, "Failed to play audio stream: {}", e),
-            RecorderError::CpalDefaultStreamConfigError(e) => write!(f, "Failed to get default stream config: {}", e),
+            RecorderError::CpalBuildStreamError(e) => {
+                write!(f, "Failed to build audio stream: {}", e)
+            }
+            RecorderError::CpalPlayStreamError(e) => {
+                write!(f, "Failed to play audio stream: {}", e)
+            }
+            RecorderError::CpalDefaultStreamConfigError(e) => {
+                write!(f, "Failed to get default stream config: {}", e)
+            }
             RecorderError::HoundError(e) => write!(f, "Audio processing error: {}", e),
             RecorderError::StreamPlayError(e) => write!(f, "Failed to play stream: {}", e),
             RecorderError::Other(msg) => write!(f, "{}", msg),
