@@ -33,6 +33,6 @@ pub enum RecordingState {
 }
 
 pub struct AudioChunkWithVAD {
-  pub chunk: Vec<i16>,
-  pub is_voice: bool,
+    pub chunk: Vec<i16>,
+    pub is_voice: bool,
 }

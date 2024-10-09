@@ -39,7 +39,9 @@
           yarn
           alsaLib
           webrtc-audio-processing
-          libclang 
+          libclang
+          rustup
+          nixd
         ];
       in
       {
@@ -48,6 +50,7 @@
 
           # Use a shellHook to append to PATH
           shellHook = ''
+            export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
             export PATH="$HOME/.cargo/bin:$PATH"
             export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath libraries}:$LD_LIBRARY_PATH
             export LIBCLANG_PATH=${pkgs.libclang.lib}/lib
@@ -63,6 +66,7 @@
             pkgs.nodejs-18_x
             pkgs.rustc
             pkgs.cargo
+            pkgs.rustup
           ];
 
           buildInputs = [
