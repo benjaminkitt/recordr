@@ -24,7 +24,8 @@ pub fn stop_recording(state: State<Arc<Mutex<Recorder>>>) -> Result<String, Stri
     recorder.stop_recording()
 }
 
-/// Starts the auto-recording process with sentence detection and silence handling.
+/// Starts the auto-recording process with sentence detection and silence
+/// handling.
 #[tauri::command]
 pub fn start_auto_record(
     sentences: Vec<Sentence>,

@@ -25,7 +25,8 @@ fn main() {
 
     info!("Starting the application");
 
-    // Initialize the Recorder instance inside an Arc and Mutex for shared state management
+    // Initialize the Recorder instance inside an Arc and Mutex for shared state
+    // management
     let recorder = Arc::new(Mutex::new(Recorder::new()));
 
     tauri::Builder::default()

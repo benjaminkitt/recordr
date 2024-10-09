@@ -17,6 +17,12 @@ use voice_activity_detector::VoiceActivityDetector;
 
 type AudioStream = Result<Stream, RecorderError>;
 
+/**
+ * Record a sentence. This function initializes the recording buffers,
+ * builds the audio stream, then waits for two audio events; detection of
+ * voice, to signify that the recording has begun, and detection of silence,
+ * to determine when to end the sentence recording.
+ */
 pub fn record_sentence(state_arc: &Arc<Mutex<AutoRecordState>>) -> Result<(), RecorderError> {
     debug!("record_sentence: Starting to record sentence");
     let (sentence, writer, path) = prepare_recording(state_arc)?;
@@ -253,7 +259,8 @@ fn get_chunk_size(sample_rate: usize) -> Result<usize, RecorderError> {
     Ok(chunk_size)
 }
 
-/// Processes an audio chunk using VAD, updating state and writing data when speech is detected.
+/// Processes an audio chunk using VAD, updating state and writing data when
+/// speech is detected.
 fn process_audio_chunk(
     data: &[i16],
     vad: &mut VoiceActivityDetector,

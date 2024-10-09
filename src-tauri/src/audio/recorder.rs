@@ -31,17 +31,19 @@ impl Recorder {
 
     /// Starts a standard recording and writes to a WAV file.
     ///
-    /// This function sets up an audio input stream, configures a WAV file writer with the
-    /// appropriate sample rate and channels, and starts recording audio data to the WAV file.
-    /// If a recording is already in progress, it returns an error. The filename is also
-    /// validated to prevent directory traversal attacks.
+    /// This function sets up an audio input stream, configures a WAV file
+    /// writer with the appropriate sample rate and channels, and starts
+    /// recording audio data to the WAV file. If a recording is already in
+    /// progress, it returns an error. The filename is also validated to
+    /// prevent directory traversal attacks.
     ///
     /// # Arguments
     /// * `filename` - The name of the WAV file to create.
     ///
     /// # Returns
     /// * `Ok(String)` - A success message indicating the recording has started.
-    /// * `Err(String)` - An error message if the recording could not be started.
+    /// * `Err(String)` - An error message if the recording could not be
+    ///   started.
     pub fn start_recording(&mut self, filename: String) -> Result<String, String> {
         // Prevent starting a new recording if one is already in progress.
         if self.writer.is_some() {
@@ -61,7 +63,8 @@ impl Recorder {
             .ok_or("No input device available")?;
         let config = device.default_input_config().map_err(|e| e.to_string())?;
 
-        // Configure WAV file writer with the sample rate and channels from the audio device.
+        // Configure WAV file writer with the sample rate and channels from the audio
+        // device.
         let channels = config.channels();
         let sample_rate = config.sample_rate().0;
         let spec = WavSpec {
@@ -144,7 +147,8 @@ impl Recorder {
         }
     }
 
-    /// Starts the auto-recording process with sentence detection and silence handling.
+    /// Starts the auto-recording process with sentence detection and silence
+    /// handling.
     pub fn start_auto_record(
         &mut self,
         sentences: Vec<Sentence>,

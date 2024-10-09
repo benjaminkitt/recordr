@@ -1,1 +1,1 @@
-cd src-tauri && cargo fmt --all -- --check
+cd src-tauri && rustup run nightly -- rustfmt ./src/main.rs --edition 2018 --check
