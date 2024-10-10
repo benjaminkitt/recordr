@@ -36,7 +36,7 @@ pub fn find_supported_config(device: &cpal::Device) -> Option<SupportedStreamCon
             let max_rate = config_range.max_sample_rate().0;
 
             // Include common sample rates for speech
-            [16000, 8000]
+            [48000, 44100, 32000, 16000, 8000]
                 .iter()
                 .find(|&&rate| rate >= min_rate && rate <= max_rate)
                 .map(|&rate| config_range.with_sample_rate(SampleRate(rate)))

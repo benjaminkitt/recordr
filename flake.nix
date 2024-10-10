@@ -42,6 +42,7 @@
           libclang
           rustup
           nixd
+          cmake
         ];
       in
       {
@@ -67,6 +68,7 @@
             pkgs.rustc
             pkgs.cargo
             pkgs.rustup
+            pkgs.cmake
           ];
 
           buildInputs = [

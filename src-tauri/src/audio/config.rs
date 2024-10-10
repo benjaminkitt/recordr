@@ -1,5 +1,5 @@
 use cpal::traits::DeviceTrait;
-use cpal::{Device, SupportedStreamConfig};
+use cpal::{Device, StreamConfig, SupportedStreamConfig};
 use std::fmt;
 
 pub struct DeviceWrapper(pub Device);
@@ -13,7 +13,8 @@ impl fmt::Debug for DeviceWrapper {
 #[derive(Debug)]
 pub struct AudioConfig {
     pub device: DeviceWrapper,
-    pub config: SupportedStreamConfig,
+    pub supported_config: SupportedStreamConfig,
+    pub config: StreamConfig,
     pub sample_rate: usize,
 }
 
