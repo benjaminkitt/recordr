@@ -7,7 +7,7 @@ use crate::models::Sentence;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{SampleFormat, Stream};
 use hound::{SampleFormat as HoundSampleFormat, WavSpec, WavWriter};
-use log::{debug, error};
+use log::{debug, error, trace};
 use serde_json::json;
 use std::cell::RefCell;
 use std::fs::File;
@@ -161,6 +161,8 @@ impl Recorder {
         debug!("Starting auto-recording...");
         let audio_config = self.create_audio_config()?;
 
+        trace!("Audio config created");
+
         let auto_record_state = AutoRecordStateBuilder::new()
             .sentences(sentences)
             .project_directory(project_directory)
@@ -169,6 +171,8 @@ impl Recorder {
             .silence_padding(silence_padding_ms)
             .audio_config(audio_config)
             .build()?;
+
+        trace!("Auto-recording state created");
 
         let state_arc = Arc::new(Mutex::new(auto_record_state));
 
