@@ -5,7 +5,7 @@ use super::stream::record_sentence;
 use super::utils::{find_supported_config, write_input_data};
 use crate::models::Sentence;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{SampleFormat, Stream};
+use cpal::{BufferSize, SampleFormat, Stream, StreamConfig};
 use hound::{SampleFormat as HoundSampleFormat, WavSpec, WavWriter};
 use log::{debug, error, trace};
 use serde_json::json;
@@ -226,9 +226,16 @@ impl Recorder {
         let config =
             find_supported_config(&device).ok_or("No supported audio configuration found")?;
 
+        trace!("Selected audio configuration:");
+        trace!("Sample format: {:?}", config.sample_format());
+        trace!("Sample rate: {:?}", config.sample_rate());
+        trace!("Channels: {}", config.channels());
+        trace!("Buffer size: {:?}", config.buffer_size());
+
         Ok(AudioConfig {
             device: DeviceWrapper(device),
-            config: config.clone(),
+            supported_config: config.clone(),
+            config: config.config().clone(),
             sample_rate: config.sample_rate().0 as usize,
         })
     }

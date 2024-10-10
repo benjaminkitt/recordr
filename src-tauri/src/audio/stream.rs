@@ -8,6 +8,7 @@ use cpal::{SampleFormat, Stream};
 use crossbeam_channel::{bounded, Receiver, Sender};
 use hound::{SampleFormat as HoundSampleFormat, WavSpec, WavWriter};
 use log::{debug, error, trace};
+use samplerate::{ConverterType, Samplerate};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
@@ -77,7 +78,7 @@ fn prepare_recording(
 
     // Create WAV writer
     let spec = WavSpec {
-        channels: state.audio_config.config.channels() as u16,
+        channels: state.audio_config.supported_config.channels() as u16,
         sample_rate: state.audio_config.sample_rate as u32,
         bits_per_sample: 16,
         sample_format: HoundSampleFormat::Int,
@@ -161,24 +162,24 @@ fn build_audio_stream(
     voice_tx: Sender<()>,
 ) -> AudioStream {
     debug!("Building audio stream");
-    let sample_format = {
+    let (sample_format, original_sample_rate) = {
         let state = state_arc.lock().unwrap();
-        state.audio_config.config.sample_format()
+        (
+            state.audio_config.supported_config.sample_format(),
+            state.audio_config.sample_rate,
+        )
     };
 
     trace!("Audio stream sample format: {:?}", sample_format);
 
     let err_fn = |err| eprintln!("Stream error: {}", err);
 
-    let sample_rate = {
-        let state = state_arc.lock().unwrap();
-        state.audio_config.sample_rate
-    };
-
-    let chunk_size = get_chunk_size(sample_rate)?;
+    let chunk_size = get_chunk_size(original_sample_rate)?;
+    let downsampled_chunk_size = get_chunk_size(16000)?;
+    trace!("Using chunk size of {} for original audio and chunk size of {} for downsampled audio (VAD)", chunk_size, downsampled_chunk_size);
     let mut vad = VoiceActivityDetector::builder()
-        .sample_rate(sample_rate as i64)
-        .chunk_size(chunk_size)
+        .sample_rate(16000)
+        .chunk_size(downsampled_chunk_size)
         .build()
         .expect("Failed to build VAD");
 
@@ -192,10 +193,18 @@ fn build_audio_stream(
 
                 move |data: &[i16], _: &cpal::InputCallbackInfo| {
                     trace!("Input callback data length: {}", data.len());
+                    let mut converter = Samplerate::new(
+                        ConverterType::SincBestQuality,
+                        original_sample_rate as u32,
+                        16000,
+                        1,
+                    )
+                    .expect("Failed to create Samplerate converter");
 
                     process_audio_chunk(
                         data,
                         &mut vad,
+                        &mut converter,
                         &state_arc,
                         &audio_chunks,
                         &writer,
@@ -208,13 +217,13 @@ fn build_audio_stream(
             let state = state_arc.lock().unwrap();
             trace!(
                 "Building input stream with config: {:?}",
-                state.audio_config.config.config()
+                state.audio_config.config
             );
             state
                 .audio_config
                 .device
                 .0
-                .build_input_stream(&state.audio_config.config.config(), input_data_fn, err_fn)
+                .build_input_stream(&state.audio_config.config, input_data_fn, err_fn)
                 .map_err(RecorderError::CpalBuildStreamError)
         }
         SampleFormat::F32 => {
@@ -226,6 +235,15 @@ fn build_audio_stream(
 
                 move |data: &[f32], _: &cpal::InputCallbackInfo| {
                     trace!("Input callback data length: {}", data.len());
+
+                    let mut converter = Samplerate::new(
+                        ConverterType::SincBestQuality,
+                        original_sample_rate as u32,
+                        16000,
+                        1,
+                    )
+                    .expect("Failed to create Samplerate converter");
+
                     let data_i16: Vec<i16> = data
                         .iter()
                         .map(|&sample| (sample * i16::MAX as f32) as i16)
@@ -234,6 +252,7 @@ fn build_audio_stream(
                     process_audio_chunk(
                         &data_i16,
                         &mut vad,
+                        &mut converter,
                         &state_arc,
                         &audio_chunks,
                         &writer,
@@ -246,13 +265,13 @@ fn build_audio_stream(
             let state = state_arc.lock().unwrap();
             trace!(
                 "Building input stream with config: {:?}",
-                state.audio_config.config.config()
+                state.audio_config.config
             );
             state
                 .audio_config
                 .device
                 .0
-                .build_input_stream(&state.audio_config.config.config(), input_data_fn, err_fn)
+                .build_input_stream(&state.audio_config.config, input_data_fn, err_fn)
                 .map_err(RecorderError::CpalBuildStreamError)
         }
         _ => Err(RecorderError::Other("Unsupported sample format".into())),
@@ -274,22 +293,40 @@ fn get_chunk_size(sample_rate: usize) -> Result<usize, RecorderError> {
 fn process_audio_chunk(
     data: &[i16],
     vad: &mut VoiceActivityDetector,
+    converter: &mut Samplerate,
     state_arc: &Arc<Mutex<AutoRecordState>>,
     audio_chunks: &Arc<Mutex<Vec<AudioChunkWithVAD>>>,
     writer: &Arc<Mutex<WavWriter<BufWriter<File>>>>,
     voice_tx: &Sender<()>,
     chunk_size: usize,
 ) {
+    let ratio = converter.ratio();
+    let adjusted_chunk_size = (chunk_size as f64 / ratio).ceil() as usize;
+
+    trace!(
+        "Adjusted chunk size: {} based on ratio: {}",
+        adjusted_chunk_size,
+        ratio
+    );
+
     let mut remaining_data = data;
 
     while !remaining_data.is_empty() {
-        let (chunk, rest) = if remaining_data.len() >= chunk_size {
-            remaining_data.split_at(chunk_size)
+        let (chunk, rest) = if remaining_data.len() >= adjusted_chunk_size {
+            remaining_data.split_at(adjusted_chunk_size)
         } else {
             (remaining_data, &[][..])
         };
 
-        let probability = vad.predict(chunk.to_vec());
+        let chunk_f32: Vec<f32> = chunk.iter().map(|&s| s as f32 / 32768.0).collect();
+        let downsampled_chunk = { converter.process(&chunk_f32).expect("Failed to downsample") };
+        trace!(
+            "Original chunk length: {}, Downsampled chunk length: {}",
+            chunk_f32.len(),
+            downsampled_chunk.len()
+        );
+
+        let probability = vad.predict(downsampled_chunk.clone());
         let is_voice = probability >= 0.5;
 
         {
@@ -387,7 +424,7 @@ fn write_trimmed_audio(
     let chunk_size = get_chunk_size(sample_rate).unwrap();
     let chunks = audio_chunks.lock().unwrap();
 
-    /**
+    /*
      * Finds the start and end indices of the speech portion within the
      * audio chunks.
      *

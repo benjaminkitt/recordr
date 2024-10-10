@@ -24,6 +24,7 @@ crossbeam-channel = "0.5.13" # For sending audio data between threads
 log = "0.4"
 env_logger = "0.10"
 voice_activity_detector = "0.1.1"
+samplerate = "0.2.4"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
