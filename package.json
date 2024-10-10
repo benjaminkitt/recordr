@@ -1,6 +1,6 @@
 {
   "name": "recordr",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "",
   "type": "module",
   "scripts": {
@@ -15,7 +15,10 @@
     "tauri-trace": "RUST_LOG=trace tauri dev",
     "format": "prettier --write \"src/**/*.{ts,svelte}\"",
     "lint": "eslint \"src/**/*.{ts,svelte}\"",
-    "lint:fix": "eslint \"src/**/*.{ts,svelte}\" --fix"
+    "lint:fix": "eslint \"src/**/*.{ts,svelte}\" --fix",
+    "version:patch": "npx tauri-version@latest patch && git push && git push --tags",
+    "version:minor": "npx tauri-version@latest minor && git push && git push --tags",
+    "version:major": "npx tauri-version@latest major && git push && git push --tags"
   },
   "license": "MIT",
   "dependencies": {
