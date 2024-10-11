@@ -183,6 +183,9 @@ fn build_audio_stream(
         .build()
         .expect("Failed to build VAD");
 
+    // Create a shared buffer for accumulating data
+    let data_buffer = Arc::new(Mutex::new(Vec::new()));
+
     match sample_format {
         SampleFormat::I16 => {
             let input_data_fn = {
@@ -190,6 +193,7 @@ fn build_audio_stream(
                 let writer = Arc::clone(&writer);
                 let audio_chunks = Arc::clone(&audio_chunks);
                 let voice_tx = voice_tx.clone();
+                let data_buffer = Arc::clone(&data_buffer);
 
                 move |data: &[i16], _: &cpal::InputCallbackInfo| {
                     trace!("Input callback data length: {}", data.len());
@@ -201,16 +205,27 @@ fn build_audio_stream(
                     )
                     .expect("Failed to create Samplerate converter");
 
-                    process_audio_chunk(
-                        data,
-                        &mut vad,
-                        &mut converter,
-                        &state_arc,
-                        &audio_chunks,
-                        &writer,
-                        &voice_tx,
-                        chunk_size,
-                    );
+                    let chunk_size = get_chunk_size(original_sample_rate).unwrap();
+                    let mut buffer = data_buffer.lock().unwrap();
+
+                    // Accumulate the incoming data
+                    buffer.extend_from_slice(data);
+
+                    while buffer.len() >= chunk_size {
+                        // Split off a chunk of the required size
+                        let chunk: Vec<i16> = buffer.drain(..chunk_size).collect();
+
+                        process_audio_chunk(
+                            &chunk,
+                            &mut vad,
+                            &mut converter,
+                            &state_arc,
+                            &audio_chunks,
+                            &writer,
+                            &voice_tx,
+                            chunk_size,
+                        );
+                    }
                 }
             };
 
@@ -232,6 +247,7 @@ fn build_audio_stream(
                 let writer = Arc::clone(&writer);
                 let audio_chunks = Arc::clone(&audio_chunks);
                 let voice_tx = voice_tx.clone();
+                let data_buffer = Arc::clone(&data_buffer);
 
                 move |data: &[f32], _: &cpal::InputCallbackInfo| {
                     trace!("Input callback data length: {}", data.len());
@@ -244,21 +260,34 @@ fn build_audio_stream(
                     )
                     .expect("Failed to create Samplerate converter");
 
+                    // Convert f32 samples to i16
                     let data_i16: Vec<i16> = data
                         .iter()
                         .map(|&sample| (sample * i16::MAX as f32) as i16)
                         .collect();
 
-                    process_audio_chunk(
-                        &data_i16,
-                        &mut vad,
-                        &mut converter,
-                        &state_arc,
-                        &audio_chunks,
-                        &writer,
-                        &voice_tx,
-                        chunk_size,
-                    );
+                    let chunk_size = get_chunk_size(original_sample_rate).unwrap();
+                    let mut buffer = data_buffer.lock().unwrap();
+
+                    // Accumulate the incoming data
+                    buffer.extend_from_slice(&data_i16);
+
+                    // Process chunks while we have enough data
+                    while buffer.len() >= chunk_size {
+                        // Split off a chunk of the required size
+                        let chunk: Vec<i16> = buffer.drain(..chunk_size).collect();
+
+                        process_audio_chunk(
+                            &chunk,
+                            &mut vad,
+                            &mut converter,
+                            &state_arc,
+                            &audio_chunks,
+                            &writer,
+                            &voice_tx,
+                            chunk_size,
+                        );
+                    }
                 }
             };
 
