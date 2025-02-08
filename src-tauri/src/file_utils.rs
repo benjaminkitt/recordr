@@ -1,8 +1,10 @@
-use crate::models::Sentence;
+use crate::models::{Project, ProjectMetadata, Sentence};
+use chrono::Utc;
 use csv::ReaderBuilder;
 use std::ffi::OsStr;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use tauri::api::path::app_local_data_dir;
 
 #[tauri::command]
 pub async fn import_sentences(file_path: &str, project_dir: &str) -> Result<Vec<Sentence>, String> {
@@ -76,34 +78,65 @@ fn parse_delimited(file_contents: &str, delimiter: u8) -> Result<Vec<Sentence>, 
 }
 
 #[tauri::command]
-pub fn create_new_project(parent_dir: &str, project_name: &str) -> Result<bool, String> {
-    let project_path = Path::new(parent_dir).join(project_name);
+pub fn create_new_project(parent_dir: &str, project: Project) -> Result<bool, String> {
+    let project_path = Path::new(parent_dir).join(&project.metadata.name);
     fs::create_dir_all(&project_path).map_err(|e| e.to_string())?;
 
-    let json_path = project_path.join(format!("{}.json", project_name));
-    let initial_data = serde_json::json!({ "sentences": [] });
-    fs::write(
-        json_path,
-        serde_json::to_string_pretty(&initial_data).unwrap(),
-    )
-    .map_err(|e| e.to_string())?;
+    let json_path = project_path.join(format!("{}.json", project.metadata.name));
+    let project_data = serde_json::to_string_pretty(&project).unwrap();
+    fs::write(json_path, project_data).map_err(|e| e.to_string())?;
 
     Ok(true)
 }
 
 #[tauri::command]
-pub fn open_project(file_path: &str) -> Result<Vec<Sentence>, String> {
+pub fn open_project(file_path: &str) -> Result<Project, String> {
     let content = fs::read_to_string(file_path).map_err(|e| e.to_string())?;
-    let data: serde_json::Value = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-    let sentences: Vec<Sentence> =
-        serde_json::from_value(data["sentences"].clone()).map_err(|e| e.to_string())?;
-    Ok(sentences)
+    let project: Project = serde_json::from_str(&content).map_err(|e| e.to_string())?;
+    Ok(project)
 }
 
 #[tauri::command]
-pub fn save_project(file_path: &str, sentences: Vec<Sentence>) -> Result<bool, String> {
-    let data = serde_json::json!({ "sentences": sentences });
-    fs::write(file_path, serde_json::to_string_pretty(&data).unwrap())
-        .map_err(|e| e.to_string())?;
+pub fn save_project(project: Project) -> Result<bool, String> {
+    let file_path =
+        Path::new(&project.metadata.directory).join(format!("{}.json", project.metadata.name));
+    let project_data = serde_json::to_string_pretty(&project).unwrap();
+    fs::write(file_path, project_data).map_err(|e| e.to_string())?;
     Ok(true)
+}
+
+fn get_recent_projects_path() -> PathBuf {
+    let mut path =
+        app_local_data_dir(&tauri::Config::default()).expect("Failed to get app local data dir");
+    path.push("recent_projects.json");
+    path
+}
+
+fn save_recent_projects(projects: &[String]) {
+    let json = serde_json::to_string(projects).unwrap();
+    let path = get_recent_projects_path();
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(path, json).unwrap();
+}
+
+#[tauri::command]
+pub fn get_recent_projects() -> Vec<String> {
+    let path = get_recent_projects_path();
+    if path.exists() {
+        let contents = fs::read_to_string(path).unwrap();
+        serde_json::from_str(&contents).unwrap_or_else(|_| Vec::new())
+    } else {
+        Vec::new()
+    }
+}
+
+#[tauri::command]
+pub fn add_recent_project(path: String) -> Vec<String> {
+    let mut recent_projects = get_recent_projects();
+    if !recent_projects.contains(&path) {
+        recent_projects.insert(0, path);
+        recent_projects.truncate(5); // Keep only the 5 most recent projects
+    }
+    save_recent_projects(&recent_projects);
+    recent_projects
 }

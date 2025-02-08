@@ -13,8 +13,10 @@
   "[svelte]": {
     "editor.defaultFormatter": "svelte.svelte-vscode"
   },
-  "rust-analyzer.rustfmt.extraArgs": [
-    "+nightly"
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "svelte"
   ],
-  "eslint.validate": ["javascript", "typescript", "svelte"]
+  "rust-analyzer.server.path": "rust-analyzer",
 }

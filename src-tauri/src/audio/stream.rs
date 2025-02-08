@@ -467,35 +467,56 @@ fn write_trimmed_audio(
         .position(|chunk| chunk.is_voice)
         .unwrap_or(0)
         .saturating_sub(1);
+
     let end_index = chunks
         .iter()
         .rposition(|chunk| chunk.is_voice)
-        .unwrap_or(chunks.len() - 1)
-        + 1;
+        .map(|i| (i + 1).min(chunks.len() - 1))
+        .unwrap_or(chunks.len().saturating_sub(1));
+
+    if start_index >= chunks.len() || end_index >= chunks.len() || start_index > end_index {
+        debug!(
+            "Invalid chunk indices: start={}, end={}, total chunks={}",
+            start_index,
+            end_index,
+            chunks.len()
+        );
+        return; // or handle this error case as appropriate
+    }
 
     let mut writer = writer.lock().unwrap();
 
-    // Write padding before speech
-    for chunk in
-        chunks[start_index.saturating_sub(padding_samples / chunk_size)..start_index].iter()
-    {
-        for &sample in &chunk.chunk {
-            writer.write_sample(sample).unwrap();
+    let mut write_samples = |chunks: &[AudioChunkWithVAD]| {
+        for chunk in chunks {
+            for &sample in &chunk.chunk {
+                if let Err(e) = writer.write_sample(sample) {
+                    error!("Failed to write sample: {}", e);
+                    return Err(e);
+                }
+            }
         }
+        Ok(())
+    };
+
+    // Write padding before speech
+    if let Err(e) = write_samples(
+        &chunks[start_index.saturating_sub(padding_samples / chunk_size)..start_index],
+    ) {
+        error!("Error writing padding before speech: {}", e);
+        return;
     }
 
     // Write speech
-    for chunk in chunks[start_index..=end_index].iter() {
-        for &sample in &chunk.chunk {
-            writer.write_sample(sample).unwrap();
-        }
+    if let Err(e) = write_samples(&chunks[start_index..=end_index]) {
+        error!("Error writing speech: {}", e);
+        return;
     }
 
     // Write padding after speech
-    for chunk in chunks[end_index + 1..end_index + 1 + padding_samples / chunk_size].iter() {
-        for &sample in &chunk.chunk {
-            writer.write_sample(sample).unwrap();
-        }
+    let padding_end = (end_index + 1 + padding_samples / chunk_size).min(chunks.len());
+    if let Err(e) = write_samples(&chunks[end_index + 1..padding_end]) {
+        error!("Error writing padding after speech: {}", e);
+        return;
     }
 }
 

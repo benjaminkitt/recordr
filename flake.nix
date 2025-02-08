@@ -18,7 +18,7 @@
           gdk-pixbuf
           glib
           dbus
-          openssl_3
+          openssl
           librsvg
         ];
 
@@ -27,7 +27,7 @@
           wget
           pkg-config
           dbus
-          openssl_3
+          openssl
           glib
           gtk3
           libsoup
@@ -40,9 +40,14 @@
           alsaLib
           webrtc-audio-processing
           libclang
-          rustup
           nixd
           cmake
+          nixpkgs-fmt
+          rustfmt
+          rust-analyzer
+          rustc
+          rustup
+          cargo
         ];
       in
       {
@@ -69,6 +74,8 @@
             pkgs.cargo
             pkgs.rustup
             pkgs.cmake
+            pkgs.nixpkgs-fmt
+            pkgs.rustfmt
           ];
 
           buildInputs = [
