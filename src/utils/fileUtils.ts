@@ -49,15 +49,28 @@ export async function newProject(modalStore: ModalStore) {
             },
             sentences: [],
           };
-          const result = await invoke('create_new_project', {
+          const savedProject: Project = await invoke('create_new_project', {
             parentDir: selected,
             project: newProject,
           });
-          if (result) {
-            project.set(newProject);
+          if (savedProject) {
+            project.set(savedProject);
             sentences.set([]);
             isProjectLoaded.set(true);
             await setWindowTitle(value);
+            // Build a recent project object with required schema
+            const projectFilePath = `${savedProject.metadata.directory}/${savedProject.metadata.name}.json`;
+            const recentProject = {
+              path: projectFilePath,
+              name: savedProject.metadata.name,
+              last_accessed: new Date().toISOString(),
+            };
+            // Send new recent project along with the app version
+            await invoke('add_recent_project', {
+              newProject: recentProject,
+              appVersion: appVersion,
+            });
+            modalStore.close();
           }
         }
       },
@@ -83,6 +96,17 @@ export async function openProject(path?: string) {
     sentences.set(loadedProject.sentences);
     isProjectLoaded.set(true);
     await setWindowTitle(loadedProject.metadata.name);
+    // Build a recent project object and add it with the app version
+    const appVersion = await getVersion();
+    const recentProject = {
+      path: selected,
+      name: loadedProject.metadata.name,
+      last_accessed: new Date().toISOString(),
+    };
+    await invoke('add_recent_project', {
+      newProject: recentProject,
+      appVersion: appVersion,
+    });
   }
 }
 
@@ -111,7 +135,7 @@ export async function saveProject() {
 }
 
 export async function toggleRecording() {
-  const sentence = get(selectedSentence); // Use 'get' to retrieve the value
+  const sentence = get(selectedSentence);
   if (!sentence) {
     alert('Select a sentence to record.');
     return;
@@ -119,10 +143,9 @@ export async function toggleRecording() {
 
   const filename = await generateFilename(sentence);
   if (get(isRecording)) {
-    // Retrieve the current value of isRecording
     invoke('stop_recording').then(() => {
       sentence.recorded = true;
-      saveProject(); // Pass current sentences as argument
+      saveProject();
     });
   } else {
     invoke('start_recording', { filename });

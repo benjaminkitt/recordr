@@ -1,10 +1,23 @@
-use crate::models::{Project, ProjectMetadata, Sentence};
-use chrono::Utc;
+use crate::models::{Project, Sentence};
 use csv::ReaderBuilder;
+use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::api::path::app_local_data_dir;
+
+#[derive(Serialize, Deserialize)]
+pub struct RecentProject {
+    pub path: String,
+    pub name: String,
+    pub last_accessed: String, // ISO timestamp
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct RecentProjectsData {
+    pub app_version: String,
+    pub recent_projects: Vec<RecentProject>,
+}
 
 #[tauri::command]
 pub async fn import_sentences(file_path: &str, project_dir: &str) -> Result<Vec<Sentence>, String> {
@@ -74,19 +87,21 @@ fn parse_delimited(file_contents: &str, delimiter: u8) -> Result<Vec<Sentence>, 
         }
     }
 
-    Ok(sentences) // Add this line to return the sentences
+    Ok(sentences)
 }
 
 #[tauri::command]
-pub fn create_new_project(parent_dir: &str, project: Project) -> Result<bool, String> {
+pub fn create_new_project(parent_dir: &str, mut project: Project) -> Result<Project, String> {
     let project_path = Path::new(parent_dir).join(&project.metadata.name);
     fs::create_dir_all(&project_path).map_err(|e| e.to_string())?;
+
+    project.metadata.directory = project_path.to_string_lossy().to_string();
 
     let json_path = project_path.join(format!("{}.json", project.metadata.name));
     let project_data = serde_json::to_string_pretty(&project).unwrap();
     fs::write(json_path, project_data).map_err(|e| e.to_string())?;
 
-    Ok(true)
+    Ok(project)
 }
 
 #[tauri::command]
@@ -97,46 +112,70 @@ pub fn open_project(file_path: &str) -> Result<Project, String> {
 }
 
 #[tauri::command]
-pub fn save_project(project: Project) -> Result<bool, String> {
+pub fn save_project(project: Project) -> Result<Project, String> {
     let file_path =
         Path::new(&project.metadata.directory).join(format!("{}.json", project.metadata.name));
     let project_data = serde_json::to_string_pretty(&project).unwrap();
     fs::write(file_path, project_data).map_err(|e| e.to_string())?;
-    Ok(true)
+    Ok(project)
 }
 
 fn get_recent_projects_path() -> PathBuf {
     let mut path =
         app_local_data_dir(&tauri::Config::default()).expect("Failed to get app local data dir");
+    path.push("recordr");
+    fs::create_dir_all(&path).expect("Failed to create recordr directory");
     path.push("recent_projects.json");
     path
 }
 
-fn save_recent_projects(projects: &[String]) {
-    let json = serde_json::to_string(projects).unwrap();
+fn save_recent_projects_data(data: &RecentProjectsData) {
+    let json = serde_json::to_string(data).unwrap();
     let path = get_recent_projects_path();
-    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    // The directory has already been created in get_recent_projects_path.
     fs::write(path, json).unwrap();
 }
 
 #[tauri::command]
-pub fn get_recent_projects() -> Vec<String> {
+pub fn get_recent_projects() -> RecentProjectsData {
     let path = get_recent_projects_path();
     if path.exists() {
-        let contents = fs::read_to_string(path).unwrap();
-        serde_json::from_str(&contents).unwrap_or_else(|_| Vec::new())
+        let contents = fs::read_to_string(&path).unwrap();
+        let mut data: RecentProjectsData =
+            serde_json::from_str(&contents).unwrap_or_else(|_| RecentProjectsData {
+                app_version: "unknown".into(),
+                recent_projects: vec![],
+            });
+        data.recent_projects
+            .sort_by(|a, b| b.last_accessed.cmp(&a.last_accessed));
+        data.recent_projects.truncate(10);
+        data
     } else {
-        Vec::new()
+        RecentProjectsData {
+            app_version: "unknown".into(),
+            recent_projects: vec![],
+        }
     }
 }
 
 #[tauri::command]
-pub fn add_recent_project(path: String) -> Vec<String> {
-    let mut recent_projects = get_recent_projects();
-    if !recent_projects.contains(&path) {
-        recent_projects.insert(0, path);
-        recent_projects.truncate(5); // Keep only the 5 most recent projects
+pub fn add_recent_project(new_project: RecentProject, app_version: String) -> RecentProjectsData {
+    let mut data = get_recent_projects();
+    // Update the top-level app version.
+    data.app_version = app_version;
+    if let Some(existing) = data
+        .recent_projects
+        .iter_mut()
+        .find(|proj| proj.path == new_project.path)
+    {
+        existing.last_accessed = new_project.last_accessed.clone();
+        existing.name = new_project.name.clone();
+    } else {
+        data.recent_projects.push(new_project);
     }
-    save_recent_projects(&recent_projects);
-    recent_projects
+    data.recent_projects
+        .sort_by(|a, b| b.last_accessed.cmp(&a.last_accessed));
+    data.recent_projects.truncate(10);
+    save_recent_projects_data(&data);
+    data
 }

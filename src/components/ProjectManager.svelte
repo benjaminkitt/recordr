@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { openProject, saveProject, newProject, handleFileImport } from '../utils/fileUtils';
+  import { saveProject, newProject, handleFileImport } from '../utils/fileUtils';
   import { isProjectLoaded } from '../stores/projectStore';
   import { getModalStore } from '@skeletonlabs/skeleton';
   import MdiFolderOpen from '~icons/mdi/folder-open';
@@ -13,8 +13,15 @@
     newProject(modalStore);
   }
 
+  import type { ModalSettings } from '@skeletonlabs/skeleton';
+
   function openExistingProject() {
-    openProject();
+    const modal: ModalSettings = {
+      type: 'component',
+      component: 'recentProjectsModal',
+      title: 'Recent Projects',
+    };
+    modalStore.trigger(modal);
   }
 
   function saveCurrentProject() {

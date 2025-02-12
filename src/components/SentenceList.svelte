@@ -53,7 +53,7 @@
     try {
       await autoRecord(
         get(sentences),
-        currentProject.metadata.name,
+        currentProject.metadata.directory,
         silenceThreshold,
         silenceDuration,
         silencePadding,

@@ -19,4 +19,6 @@
     "svelte"
   ],
   "rust-analyzer.server.path": "rust-analyzer",
+  "rust-analyzer.linkedProjects": ["src-tauri/Cargo.toml"],
+  "terminal.integrated.defaultProfile.linux": "fish",
 }

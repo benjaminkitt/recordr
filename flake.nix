@@ -11,16 +11,22 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        libraries = with pkgs;[
-          webkitgtk
-          gtk3
-          cairo
-          gdk-pixbuf
-          glib
-          dbus
-          openssl
-          librsvg
-        ];
+        openglLibraries = with pkgs; [ mesa libglvnd ];
+
+        # Added essential libraries for dynamic linking
+        libraries = with pkgs;
+          [
+            webkitgtk_4_1
+            gtk3
+            cairo
+            gdk-pixbuf
+            glib
+            dbus
+            openssl
+            librsvg
+            zlib
+            stdenv.cc.cc.lib
+          ] ++ openglLibraries;
 
         packages = with pkgs; [
           curl
@@ -33,8 +39,13 @@
           libsoup
           webkitgtk
           librsvg
+          mesa
+          libglvnd
           rustc
           cargo
+          rustfmt
+          rust-analyzer
+          rustup
           nodejs-18_x
           yarn
           alsaLib
@@ -42,25 +53,32 @@
           libclang
           nixd
           cmake
-          nixpkgs-fmt
-          rustfmt
-          rust-analyzer
-          rustc
-          rustup
-          cargo
+          nixfmt
+          xorg.libX11
+          xorg.libXcursor
+          xorg.libXrandr
+          xorg.libXi
         ];
-      in
-      {
-        devShell = self.devShells.${system}.default or pkgs.mkShell {
+      in {
+        devShell = pkgs.mkShell {
           buildInputs = packages;
 
-          # Use a shellHook to append to PATH
+          # Modified shellHook with nix-ld configuration
           shellHook = ''
             export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
             export PATH="$HOME/.cargo/bin:$PATH"
-            export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath libraries}:$LD_LIBRARY_PATH
+
+            # Combined library paths
+            export LD_LIBRARY_PATH=${
+              pkgs.lib.makeLibraryPath libraries
+            }:$LD_LIBRARY_PATH:$NIX_LD_LIBRARY_PATH
+
             export LIBCLANG_PATH=${pkgs.libclang.lib}/lib
             export XDG_DATA_DIRS=${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:$XDG_DATA_DIRS
+
+            # WebKit environment variables
+            export WEBKIT_DISABLE_DMABUF_RENDERER=1
+            export WEBKIT_DISABLE_COMPOSITING_MODE=1
           '';
         };
 
@@ -74,12 +92,10 @@
             pkgs.cargo
             pkgs.rustup
             pkgs.cmake
-            pkgs.nixpkgs-fmt
-            pkgs.rustfmt
+            pkgs.nixfmt
           ];
 
-          buildInputs = [
-            # Add any additional build-time dependencies here
+          buildInputs = [ # Keep existing build inputs
           ];
 
           buildPhase = ''
@@ -92,6 +108,5 @@
             cp -r src-tauri/target/release/* $out/bin/
           '';
         };
-      }
-    );
+      });
 }
