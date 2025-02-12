@@ -1,12 +1,12 @@
 <script lang="ts">
   import {
+    project,
     sentences,
     selectedSentence,
     isRecording,
     isProjectLoaded,
-    projectDirectory,
   } from '../stores/projectStore';
-  import { playSentence, toggleRecording } from '../utils/fileUtils';
+  import { playSentence, toggleRecording, saveProject } from '../utils/fileUtils';
   import type { Sentence, AutoRecordFinishSentenceEvent } from '../types';
   import {
     startAutoRecord as autoRecord,
@@ -14,7 +14,6 @@
     pauseAutoRecord,
     resumeAutoRecord,
   } from '../utils/autoRecord';
-  import { saveProject } from '../utils/fileUtils';
   import { onMount, afterUpdate } from 'svelte';
   import { get } from 'svelte/store';
   import { listen } from '@tauri-apps/api/event';
@@ -43,10 +42,10 @@
 
   async function startAutoRecord() {
     isAutoRecording = true;
-    const projectDir = get(projectDirectory);
+    const currentProject = get(project);
 
-    if (!projectDir) {
-      console.error('Project directory is not set');
+    if (!currentProject) {
+      console.error('No project loaded');
       isAutoRecording = false;
       return;
     }
@@ -54,7 +53,7 @@
     try {
       await autoRecord(
         get(sentences),
-        projectDir,
+        currentProject.metadata.directory,
         silenceThreshold,
         silenceDuration,
         silencePadding,
@@ -99,7 +98,7 @@
         const sentenceIndex = $sentences.findIndex((s) => s.id === event.payload.id);
         if (sentenceIndex !== -1) {
           $sentences[sentenceIndex].recorded = true;
-          $sentences[sentenceIndex].audioFilePath = event.payload.audioFilePath;
+          $sentences[sentenceIndex].audio_file_path = event.payload.audioFilePath;
           saveProject(); // Add this function to auto-save the project
         }
         currentRecordingId = null;
@@ -152,17 +151,20 @@
 
   function addSentence() {
     if (!$isProjectLoaded || $isRecording || isAutoRecording) {
-      return; // Don't allow adding if no project is loaded or while recording
+      return;
     }
     const trimmedSentence = newSentence.trim();
     if (trimmedSentence.length === 0) {
-      return; // Don't add empty sentences
+      return;
     } else if ($sentences.some((s) => s.text === trimmedSentence)) {
       alert('This sentence is already in the list.');
     } else {
       const newId = Math.max(0, ...$sentences.map((s) => s.id)) + 1;
-      $sentences = [...$sentences, { id: newId, text: trimmedSentence, recorded: false }];
-      saveProject(); // Add this function to auto-save the project
+      $sentences = [
+        ...$sentences,
+        { id: newId, text: trimmedSentence, recorded: false, audio_file_path: null },
+      ];
+      saveProject();
       newSentence = '';
     }
   }

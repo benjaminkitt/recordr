@@ -14,3 +14,21 @@ impl fmt::Display for Sentence {
         write!(f, "Sentence {{ id: {}, text: {} }}", self.id, self.text)
     }
 }
+
+use chrono::{DateTime, Utc};
+
+#[derive(Serialize, Deserialize)]
+pub struct ProjectMetadata {
+    pub name: String,
+    pub created_version: String,
+    pub last_updated_version: String,
+    pub created_at: DateTime<Utc>,
+    pub last_modified: DateTime<Utc>,
+    pub directory: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Project {
+    pub metadata: ProjectMetadata,
+    pub sentences: Vec<Sentence>,
+}

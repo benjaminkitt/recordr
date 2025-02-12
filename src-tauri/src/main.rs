@@ -17,7 +17,10 @@ use audio::{
     Recorder, // Import the Recorder struct
 };
 
-use file_utils::{create_new_project, import_sentences, open_project, save_project};
+use file_utils::{
+    add_recent_project, create_new_project, get_recent_projects, import_sentences, open_project,
+    save_project,
+};
 
 fn main() {
     // Initialize the logger
@@ -39,6 +42,8 @@ fn main() {
             pause_auto_record,
             resume_auto_record,
             import_sentences,
+            get_recent_projects,
+            add_recent_project,
             create_new_project,
             open_project,
             save_project,

@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Tauri Backend",
+      "program": "${workspaceFolder}/src-tauri/target/debug/recordr",
+      "args": [],
+      "cwd": "${workspaceFolder}/src-tauri",
+      "preLaunchTask": "predebug",
+      "postDebugTask": "kill npm: dev"
+    }
+  ]
+}
