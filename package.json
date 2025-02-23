@@ -18,11 +18,11 @@
     "format": "prettier --write \"src/**/*.{ts,svelte}\"",
     "lint": "eslint \"src/**/*.{ts,svelte}\"",
     "lint:fix": "eslint \"src/**/*.{ts,svelte}\" --fix",
-    "version:patch": "npx tauri-version@latest patch && git push && git push --tags",
-    "version:minor": "npx tauri-version@latest minor && git push && git push --tags",
-    "version:major": "npx tauri-version@latest major && git push && git push --tags"
+    "version:patch": "npx tauri-version@latest prepatch && git push && git push --tags",
+    "version:minor": "npx tauri-version@latest preminor && git push && git push --tags",
+    "version:major": "npx tauri-version@latest premajor && git push && git push --tags"
   },
-  "license": "MIT",
+  "license": "Mozila Public License 2.0",
   "dependencies": {
     "@floating-ui/dom": "^1.6.11",
     "@tauri-apps/api": "^1",
